@@ -2,6 +2,7 @@ import { Canvas } from '@react-three/fiber';
 import { Terrain } from './Terrain';
 import { Water } from './Water';
 import { Vegetation } from './Vegetation';
+import { Animals } from './Animals';
 import { Atmosphere } from './Atmosphere';
 import { CameraController } from './CameraController';
 import { useSimulationStore } from '@/store/simulationStore';
