@@ -222,6 +222,10 @@ export function ControlPanel() {
 
             <div>
               <label className="text-xs text-muted-foreground uppercase tracking-wider mb-3 block">⚙️ Shared</label>
+              <div className="space-y-3">
+                <SliderRow label="Energy per Kill" value={eco.energyPerKill} min={20} max={100} step={10} onChange={(v) => eco.set({ energyPerKill: v })} />
+                <SliderRow label="Reproduce Energy" value={eco.reproduceEnergy} min={40} max={100} step={5} onChange={(v) => eco.set({ reproduceEnergy: v })} />
+                <SliderRow label="Kill Distance" value={eco.killDist} min={1} max={6} step={0.5} onChange={(v) => eco.set({ killDist: v })} />
               </div>
             </div>
 
