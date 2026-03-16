@@ -294,12 +294,14 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
   // Population floor: respawn if extinct
   if (aliveWolves.length === 0) {
     for (let i = 0; i < 5; i++) newBorns.push(createAgent('wolf'));
+    events.push(makeEvent('extinction', 'wolf', 'Wolves went extinct — pack respawned'));
   }
   if (aliveElks.length === 0) {
     for (let i = 0; i < 15; i++) newBorns.push(createAgent('elk'));
+    events.push(makeEvent('extinction', 'elk', 'Elk went extinct — herd respawned'));
   }
 
   // Remove long-dead agents, keep alive + newborns
   const result = agents.filter(a => a.alive).concat(newBorns);
-  return result;
+  return { agents: result, events };
 }
