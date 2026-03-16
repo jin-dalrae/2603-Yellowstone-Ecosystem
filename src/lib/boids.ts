@@ -1,5 +1,7 @@
 // Boids flocking algorithm + predator-prey rules engine
 
+import { useEcoConfigStore } from '@/store/ecoConfigStore';
+
 export interface Agent {
   id: number;
   type: 'wolf' | 'elk';
@@ -30,7 +32,7 @@ export interface TickResult {
   events: SimEvent[];
 }
 
-const WORLD_HALF = 90; // stay within terrain bounds
+const WORLD_HALF = 90;
 const MAX_SPEED_ELK = 12;
 const MAX_SPEED_WOLF = 14;
 
@@ -41,19 +43,8 @@ const COHESION_DIST = 20;
 const SEPARATION_WEIGHT = 2.5;
 const ALIGNMENT_WEIGHT = 1.0;
 const COHESION_WEIGHT = 0.8;
-
-// Predator-prey
-const WOLF_CHASE_DIST = 35;
-const ELK_FLEE_DIST = 30;
 const HUNT_WEIGHT = 3.0;
 const FLEE_WEIGHT = 4.0;
-const KILL_DIST = 2.5;
-const ENERGY_PER_KILL = 60;
-const WOLF_ENERGY_DRAIN = 2.5;  // per second
-const ELK_ENERGY_DRAIN = 0.8;
-const ELK_GRAZE_RATE = 3.0;    // energy per second when slow
-const REPRODUCE_ENERGY = 80;
-const REPRODUCE_COOLDOWN_FRAMES = 300; // ticks between births
 
 let nextId = 1000;
 
@@ -122,9 +113,9 @@ function cohesion(agent: Agent, neighbors: Agent[]): [number, number] {
   return [(cx - agent.x) * COHESION_WEIGHT, (cz - agent.z) * COHESION_WEIGHT];
 }
 
-function wolfChase(wolf: Agent, elks: Agent[]): [number, number] {
+function wolfChase(wolf: Agent, elks: Agent[], chaseDist: number): [number, number] {
   let closest: Agent | null = null;
-  let minDist = WOLF_CHASE_DIST;
+  let minDist = chaseDist;
   for (const elk of elks) {
     if (!elk.alive) continue;
     const dx = elk.x - wolf.x;
@@ -142,14 +133,14 @@ function wolfChase(wolf: Agent, elks: Agent[]): [number, number] {
   return [(dx / dist) * HUNT_WEIGHT, (dz / dist) * HUNT_WEIGHT];
 }
 
-function elkFlee(elk: Agent, wolves: Agent[]): [number, number] {
+function elkFlee(elk: Agent, wolves: Agent[], fleeDist: number): [number, number] {
   let fx = 0, fz = 0;
   for (const w of wolves) {
     if (!w.alive) continue;
     const dx = elk.x - w.x;
     const dz = elk.z - w.z;
     const dist = Math.sqrt(dx * dx + dz * dz);
-    if (dist < ELK_FLEE_DIST && dist > 0) {
+    if (dist < fleeDist && dist > 0) {
       fx += (dx / dist) * FLEE_WEIGHT / (dist * 0.1);
       fz += (dz / dist) * FLEE_WEIGHT / (dist * 0.1);
     }
@@ -175,6 +166,7 @@ export function createAgent(type: 'wolf' | 'elk', x?: number, z?: number): Agent
 }
 
 export function tickAgents(agents: Agent[], delta: number): TickResult {
+  const cfg = useEcoConfigStore.getState();
   const wolves = agents.filter(a => a.type === 'wolf' && a.alive);
   const elks = agents.filter(a => a.type === 'elk' && a.alive);
   const newBorns: Agent[] = [];
@@ -186,7 +178,6 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
     const sameType = agent.type === 'wolf' ? wolves : elks;
     const neighbors = sameType.filter(a => a.id !== agent.id);
 
-    // Boids forces
     const [sx, sz] = separation(agent, neighbors);
     const [ax, az] = alignment(agent, neighbors);
     const [cx, cz] = cohesion(agent, neighbors);
@@ -195,33 +186,28 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
     let fx = sx + ax + cx + bx;
     let fz = sz + az + cz + bz;
 
-    // Predator-prey forces
     if (agent.type === 'wolf') {
-      const [hx, hz] = wolfChase(agent, elks);
+      const [hx, hz] = wolfChase(agent, elks, cfg.wolfChaseDist);
       fx += hx;
       fz += hz;
-      agent.energy -= WOLF_ENERGY_DRAIN * delta;
+      agent.energy -= cfg.wolfEnergyDrain * delta;
     } else {
-      const [flx, flz] = elkFlee(agent, wolves);
+      const [flx, flz] = elkFlee(agent, wolves, cfg.elkFleeDist);
       fx += flx;
       fz += flz;
-      // Grazing: recover energy when moving slow
       const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
       if (speed < 3) {
-        agent.energy += ELK_GRAZE_RATE * delta;
+        agent.energy += cfg.elkGrazeRate * delta;
       }
-      agent.energy -= ELK_ENERGY_DRAIN * delta;
+      agent.energy -= cfg.elkEnergyDrain * delta;
     }
 
-    // Add slight wander
     fx += (Math.random() - 0.5) * 1.5;
     fz += (Math.random() - 0.5) * 1.5;
 
-    // Apply forces
     agent.vx += fx * delta;
     agent.vz += fz * delta;
 
-    // Clamp speed
     const maxSpd = agent.type === 'wolf' ? MAX_SPEED_WOLF : MAX_SPEED_ELK;
     const spd = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
     if (spd > maxSpd) {
@@ -229,26 +215,21 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
       agent.vz = (agent.vz / spd) * maxSpd;
     }
 
-    // Move
     agent.x = clampToWorld(agent.x + agent.vx * delta);
     agent.z = clampToWorld(agent.z + agent.vz * delta);
     agent.age += delta;
-
-    // Energy clamp
     agent.energy = Math.min(100, agent.energy);
 
-    // Death by starvation
     if (agent.energy <= 0) {
       agent.alive = false;
       events.push(makeEvent('starvation', agent.type, `A ${agent.type} starved`));
     }
 
-    // Old age death
     if (agent.type === 'wolf' && agent.age > 120) { agent.alive = false; }
     if (agent.type === 'elk' && agent.age > 150) { agent.alive = false; }
   }
 
-  // Wolf kills: check proximity
+  // Wolf kills
   for (const wolf of wolves) {
     if (!wolf.alive) continue;
     for (const elk of elks) {
@@ -256,9 +237,9 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
       const dx = wolf.x - elk.x;
       const dz = wolf.z - elk.z;
       const dist = Math.sqrt(dx * dx + dz * dz);
-      if (dist < KILL_DIST) {
+      if (dist < cfg.killDist) {
         elk.alive = false;
-        wolf.energy = Math.min(100, wolf.energy + ENERGY_PER_KILL);
+        wolf.energy = Math.min(100, wolf.energy + cfg.energyPerKill);
         events.push(makeEvent('kill', 'wolf', 'Wolf hunted an elk'));
         break;
       }
@@ -269,9 +250,9 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
   const aliveWolves = agents.filter(a => a.type === 'wolf' && a.alive);
   const aliveElks = agents.filter(a => a.type === 'elk' && a.alive);
 
-  if (aliveWolves.length >= 2 && aliveWolves.length < 25) {
+  if (aliveWolves.length >= 2 && aliveWolves.length < cfg.wolfMaxPop) {
     for (const w of aliveWolves) {
-      if (w.energy > REPRODUCE_ENERGY && Math.random() < 0.002) {
+      if (w.energy > cfg.reproduceEnergy && Math.random() < cfg.wolfReproChance) {
         w.energy -= 30;
         newBorns.push(createAgent('wolf', w.x + (Math.random() - 0.5) * 5, w.z + (Math.random() - 0.5) * 5));
         events.push(makeEvent('birth', 'wolf', 'Wolf pup born'));
@@ -280,9 +261,9 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
     }
   }
 
-  if (aliveElks.length >= 2 && aliveElks.length < 60) {
+  if (aliveElks.length >= 2 && aliveElks.length < cfg.elkMaxPop) {
     for (const e of aliveElks) {
-      if (e.energy > REPRODUCE_ENERGY && Math.random() < 0.005) {
+      if (e.energy > cfg.reproduceEnergy && Math.random() < cfg.elkReproChance) {
         e.energy -= 25;
         newBorns.push(createAgent('elk', e.x + (Math.random() - 0.5) * 5, e.z + (Math.random() - 0.5) * 5));
         events.push(makeEvent('birth', 'elk', 'Elk calf born'));
@@ -291,7 +272,7 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
     }
   }
 
-  // Population floor: respawn if extinct
+  // Respawn if extinct
   if (aliveWolves.length === 0) {
     for (let i = 0; i < 5; i++) newBorns.push(createAgent('wolf'));
     events.push(makeEvent('extinction', 'wolf', 'Wolves went extinct — pack respawned'));
@@ -301,7 +282,6 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
     events.push(makeEvent('extinction', 'elk', 'Elk went extinct — herd respawned'));
   }
 
-  // Remove long-dead agents, keep alive + newborns
   const result = agents.filter(a => a.alive).concat(newBorns);
   return { agents: result, events };
 }
