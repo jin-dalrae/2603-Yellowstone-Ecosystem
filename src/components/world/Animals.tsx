@@ -1,5 +1,5 @@
-import { useRef, useMemo, useEffect } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useRef, useMemo, useEffect, useCallback } from 'react';
+import { useFrame, ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useAgentStore } from '@/store/agentStore';
 import { useSimulationStore } from '@/store/simulationStore';
@@ -44,6 +44,8 @@ function createElkGeometry(): THREE.BufferGeometry {
 const dummy = new THREE.Object3D();
 const wolfColor = new THREE.Color(0.35, 0.32, 0.28);
 const elkColor = new THREE.Color(0.55, 0.42, 0.25);
+const selectedWolfColor = new THREE.Color(0.9, 0.5, 0.2);
+const selectedElkColor = new THREE.Color(0.9, 0.7, 0.2);
 
 export function Animals() {
   const wolfMeshRef = useRef<THREE.InstancedMesh>(null);
@@ -55,6 +57,28 @@ export function Animals() {
   const wolfMat = useMemo(() => new THREE.MeshLambertMaterial({ color: wolfColor }), []);
   const elkMat = useMemo(() => new THREE.MeshLambertMaterial({ color: elkColor }), []);
 
+  // Store ordered agent ids for click mapping
+  const wolfIdsRef = useRef<number[]>([]);
+  const elkIdsRef = useRef<number[]>([]);
+
+  const handleWolfClick = useCallback((e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    if (e.instanceId !== undefined && wolfIdsRef.current[e.instanceId]) {
+      const id = wolfIdsRef.current[e.instanceId];
+      useAgentStore.getState().selectAgent(id);
+      useSimulationStore.getState().setCameraMode('follow');
+    }
+  }, []);
+
+  const handleElkClick = useCallback((e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    if (e.instanceId !== undefined && elkIdsRef.current[e.instanceId]) {
+      const id = elkIdsRef.current[e.instanceId];
+      useAgentStore.getState().selectAgent(id);
+      useSimulationStore.getState().setCameraMode('follow');
+    }
+  }, []);
+
   // Tick agent simulation each frame
   useFrame((_, delta) => {
     const simState = useSimulationStore.getState();
@@ -64,8 +88,15 @@ export function Animals() {
     useAgentStore.getState().tickAgents(scaledDelta);
 
     const agents = useAgentStore.getState().agents;
+    const selectedId = useAgentStore.getState().selectedAgentId;
     const wolves = agents.filter(a => a.type === 'wolf' && a.alive);
     const elks = agents.filter(a => a.type === 'elk' && a.alive);
+
+    // Store ids for click mapping
+    wolfIdsRef.current = wolves.map(w => w.id);
+    elkIdsRef.current = elks.map(e => e.id);
+
+    const color = new THREE.Color();
 
     // Update wolf instances
     if (wolfMeshRef.current) {
@@ -74,10 +105,12 @@ export function Animals() {
           const w = wolves[i];
           const y = getTerrainHeight(w.x, w.z);
           dummy.position.set(w.x, y, w.z);
-          // Face movement direction
           const angle = Math.atan2(w.vx, w.vz);
           dummy.rotation.set(0, angle, 0);
-          dummy.scale.setScalar(1);
+          const isSelected = w.id === selectedId;
+          dummy.scale.setScalar(isSelected ? 1.4 : 1);
+          color.copy(isSelected ? selectedWolfColor : wolfColor);
+          wolfMeshRef.current.setColorAt(i, color);
         } else {
           dummy.position.set(0, -100, 0);
           dummy.scale.setScalar(0);
@@ -86,6 +119,7 @@ export function Animals() {
         wolfMeshRef.current.setMatrixAt(i, dummy.matrix);
       }
       wolfMeshRef.current.instanceMatrix.needsUpdate = true;
+      if (wolfMeshRef.current.instanceColor) wolfMeshRef.current.instanceColor.needsUpdate = true;
     }
 
     // Update elk instances
@@ -97,7 +131,10 @@ export function Animals() {
           dummy.position.set(e.x, y, e.z);
           const angle = Math.atan2(e.vx, e.vz);
           dummy.rotation.set(0, angle, 0);
-          dummy.scale.setScalar(1);
+          const isSelected = e.id === selectedId;
+          dummy.scale.setScalar(isSelected ? 1.4 : 1);
+          color.copy(isSelected ? selectedElkColor : elkColor);
+          elkMeshRef.current.setColorAt(i, color);
         } else {
           dummy.position.set(0, -100, 0);
           dummy.scale.setScalar(0);
@@ -106,6 +143,18 @@ export function Animals() {
         elkMeshRef.current.setMatrixAt(i, dummy.matrix);
       }
       elkMeshRef.current.instanceMatrix.needsUpdate = true;
+      if (elkMeshRef.current.instanceColor) elkMeshRef.current.instanceColor.needsUpdate = true;
+    }
+
+    // Deselect if agent died
+    if (selectedId !== null) {
+      const sel = agents.find(a => a.id === selectedId);
+      if (!sel || !sel.alive) {
+        useAgentStore.getState().selectAgent(null);
+        if (simState.cameraMode === 'follow') {
+          useSimulationStore.getState().setCameraMode('orbit');
+        }
+      }
     }
   });
 
@@ -137,11 +186,13 @@ export function Animals() {
         ref={wolfMeshRef}
         args={[wolfGeo, wolfMat, MAX_WOLVES]}
         castShadow
+        onClick={handleWolfClick}
       />
       <instancedMesh
         ref={elkMeshRef}
         args={[elkGeo, elkMat, MAX_ELK]}
         castShadow
+        onClick={handleElkClick}
       />
     </>
   );

@@ -14,6 +14,8 @@ interface AgentState {
   events: SimEvent[];
   populationHistory: PopSnapshot[];
   tickCounter: number;
+  selectedAgentId: number | null;
+  selectAgent: (id: number | null) => void;
   tickAgents: (delta: number) => void;
 }
 
@@ -34,6 +36,8 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   events: [],
   populationHistory: [],
   tickCounter: 0,
+  selectedAgentId: null,
+  selectAgent: (id) => set({ selectedAgentId: id }),
   tickAgents: (delta: number) => {
     const { agents, events, populationHistory, tickCounter } = get();
     const result = tickAgents(agents, delta);

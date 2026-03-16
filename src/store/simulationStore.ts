@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
-export type CameraMode = 'orbit' | 'god';
+export type CameraMode = 'orbit' | 'god' | 'follow';
 
 export const SEASON_INDEX: Record<Season, number> = {
   spring: 0,

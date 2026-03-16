@@ -2,6 +2,7 @@ import { Scene } from '@/components/world/Scene';
 import { ControlPanel } from '@/components/ControlPanel';
 import { StatusOverlay } from '@/components/StatusOverlay';
 import { StatusPanel } from '@/components/StatusPanel';
+import { AnimalDetailPanel } from '@/components/AnimalDetailPanel';
 
 const Index = () => {
   return (
@@ -10,6 +11,7 @@ const Index = () => {
       <ControlPanel />
       <StatusPanel />
       <StatusOverlay />
+      <AnimalDetailPanel />
     </div>
   );
 };
