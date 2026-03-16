@@ -17,7 +17,10 @@ export function AnimalDetailPanel() {
 
   const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
   const isWolf = agent.type === 'wolf';
-  const maxAge = isWolf ? 120 : 150;
+  const maxAges: Record<string, number> = { wolf: 120, elk: 150, bear: 180, beaver: 100, raven: 80 };
+  const maxAge = maxAges[agent.type] ?? 120;
+  const emojis: Record<string, string> = { wolf: '🐺', elk: '🦌', bear: '🐻', beaver: '🦫', raven: '🐦‍⬛' };
+  const emoji = emojis[agent.type] ?? '🐾';
 
   const deselect = () => {
     selectAgent(null);
@@ -33,7 +36,7 @@ export function AnimalDetailPanel() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
         <div className="flex items-center gap-2">
-          <span className="text-base">{isWolf ? '🐺' : '🦌'}</span>
+          <span className="text-base">{emoji}</span>
           <span className="text-sm font-semibold text-foreground capitalize">
             {agent.type} #{agent.id}
           </span>

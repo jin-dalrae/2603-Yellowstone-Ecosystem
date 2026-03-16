@@ -13,6 +13,9 @@ import { Area, AreaChart, XAxis, YAxis } from 'recharts';
 const chartConfig: ChartConfig = {
   wolves: { label: 'Wolves', color: 'hsl(0 70% 50%)' },
   elk: { label: 'Elk', color: 'hsl(142 50% 45%)' },
+  bears: { label: 'Bears', color: 'hsl(30 60% 35%)' },
+  beavers: { label: 'Beavers', color: 'hsl(25 50% 40%)' },
+  ravens: { label: 'Ravens', color: 'hsl(260 30% 30%)' },
 };
 
 const EVENT_ICONS: Record<SimEvent['type'], React.ReactNode> = {
@@ -21,6 +24,7 @@ const EVENT_ICONS: Record<SimEvent['type'], React.ReactNode> = {
   extinction: <AlertTriangle className="w-3 h-3 text-destructive shrink-0" />,
   respawn: <AlertTriangle className="w-3 h-3 text-accent shrink-0" />,
   starvation: <Utensils className="w-3 h-3 text-muted-foreground shrink-0" />,
+  dam_built: <Utensils className="w-3 h-3 text-primary shrink-0" />,
 };
 
 function PopulationChart({ data }: { data: PopSnapshot[] }) {
@@ -44,26 +48,27 @@ function PopulationChart({ data }: { data: PopSnapshot[] }) {
             <stop offset="0%" stopColor="hsl(142 50% 45%)" stopOpacity={0.4} />
             <stop offset="100%" stopColor="hsl(142 50% 45%)" stopOpacity={0.05} />
           </linearGradient>
+          <linearGradient id="bearGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="hsl(30 60% 35%)" stopOpacity={0.4} />
+            <stop offset="100%" stopColor="hsl(30 60% 35%)" stopOpacity={0.05} />
+          </linearGradient>
+          <linearGradient id="beaverGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="hsl(25 50% 40%)" stopOpacity={0.4} />
+            <stop offset="100%" stopColor="hsl(25 50% 40%)" stopOpacity={0.05} />
+          </linearGradient>
+          <linearGradient id="ravenGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="hsl(260 30% 30%)" stopOpacity={0.4} />
+            <stop offset="100%" stopColor="hsl(260 30% 30%)" stopOpacity={0.05} />
+          </linearGradient>
         </defs>
         <XAxis dataKey="tick" hide />
         <YAxis tick={{ fontSize: 10 }} width={30} />
         <ChartTooltip content={<ChartTooltipContent />} />
-        <Area
-          type="monotone"
-          dataKey="wolves"
-          stroke="hsl(0 70% 50%)"
-          fill="url(#wolfGrad)"
-          strokeWidth={2}
-          dot={false}
-        />
-        <Area
-          type="monotone"
-          dataKey="elk"
-          stroke="hsl(142 50% 45%)"
-          fill="url(#elkGrad)"
-          strokeWidth={2}
-          dot={false}
-        />
+        <Area type="monotone" dataKey="wolves" stroke="hsl(0 70% 50%)" fill="url(#wolfGrad)" strokeWidth={2} dot={false} />
+        <Area type="monotone" dataKey="elk" stroke="hsl(142 50% 45%)" fill="url(#elkGrad)" strokeWidth={2} dot={false} />
+        <Area type="monotone" dataKey="bears" stroke="hsl(30 60% 35%)" fill="url(#bearGrad)" strokeWidth={1.5} dot={false} />
+        <Area type="monotone" dataKey="beavers" stroke="hsl(25 50% 40%)" fill="url(#beaverGrad)" strokeWidth={1.5} dot={false} />
+        <Area type="monotone" dataKey="ravens" stroke="hsl(260 30% 30%)" fill="url(#ravenGrad)" strokeWidth={1.5} dot={false} />
       </AreaChart>
     </ChartContainer>
   );
@@ -95,7 +100,7 @@ function EventFeed({ events }: { events: SimEvent[] }) {
 
 export function StatusPanel() {
   const [collapsed, setCollapsed] = useState(false);
-  const { wolfCount, elkCount, populationHistory, events } = useAgentStore();
+  const { wolfCount, elkCount, bearCount, beaverCount, ravenCount, populationHistory, events } = useAgentStore();
 
   if (collapsed) {
     return (
@@ -126,19 +131,21 @@ export function StatusPanel() {
 
       <div className="p-4 space-y-4">
         {/* Population counts */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-secondary/40 rounded-lg p-3 text-center">
-            <div className="text-lg font-bold text-foreground">{wolfCount}</div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
-              🐺 Wolves
+        <div className="grid grid-cols-3 gap-1.5">
+          {[
+            { emoji: '🐺', label: 'Wolves', count: wolfCount },
+            { emoji: '🦌', label: 'Elk', count: elkCount },
+            { emoji: '🐻', label: 'Bears', count: bearCount },
+            { emoji: '🦫', label: 'Beavers', count: beaverCount },
+            { emoji: '🐦‍⬛', label: 'Ravens', count: ravenCount },
+          ].map((s) => (
+            <div key={s.label} className="bg-secondary/40 rounded-lg p-2 text-center">
+              <div className="text-sm font-bold text-foreground">{s.count}</div>
+              <div className="text-[9px] text-muted-foreground uppercase tracking-wider">
+                {s.emoji} {s.label}
+              </div>
             </div>
-          </div>
-          <div className="bg-secondary/40 rounded-lg p-3 text-center">
-            <div className="text-lg font-bold text-foreground">{elkCount}</div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
-              🦌 Elk
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Chart */}

@@ -1,0 +1,137 @@
+import { useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
+import { fbm } from '@/lib/noise';
+import { useSimulationStore, SEASON_INDEX } from '@/store/simulationStore';
+
+const GRASS_COUNT = 3000;
+const SIZE = 200;
+const MAX_HEIGHT = 28;
+
+function getHeight(x: number, z: number) {
+  let h = fbm(x * 0.008, z * 0.008, 6) * MAX_HEIGHT;
+  h += fbm(x * 0.02, z * 0.02, 4) * 5;
+  const riverDist = Math.abs(z - Math.sin(x * 0.03) * 20);
+  const riverFactor = Math.max(0, 1 - riverDist / 15);
+  h *= 1 - riverFactor * 0.6;
+  const edgeDist = Math.max(Math.abs(x), Math.abs(z)) / (SIZE / 2);
+  const edgeFalloff = 1 - Math.pow(Math.max(0, edgeDist - 0.6) / 0.4, 2);
+  h *= edgeFalloff;
+  return Math.max(0.5, h);
+}
+
+function mulberry(seed: number) {
+  let a = seed;
+  return () => {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+export function GrassPatches() {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+
+  const { grassData, baseColors } = useMemo(() => {
+    const grassData: { x: number; y: number; z: number; scale: number; rotY: number }[] = [];
+    const baseColors: THREE.Color[] = [];
+    const rng = mulberry(456);
+
+    for (let i = 0; i < GRASS_COUNT * 2; i++) {
+      const x = (rng() - 0.5) * SIZE * 0.9;
+      const z = (rng() - 0.5) * SIZE * 0.9;
+      const h = getHeight(x, z);
+      // Grass grows in lower, flatter areas (not on high peaks or in water)
+      if (h < 2 || h > 14) continue;
+      const riverDist = Math.abs(z - Math.sin(x * 0.03) * 20);
+      if (riverDist < 4) continue;
+      if (rng() > 0.5) continue;
+      if (grassData.length >= GRASS_COUNT) break;
+
+      const scale = 0.3 + rng() * 0.5;
+      grassData.push({ x, y: h, z, scale, rotY: rng() * Math.PI * 2 });
+      const g = 0.3 + rng() * 0.25;
+      baseColors.push(new THREE.Color(0.15, g, 0.05));
+    }
+    return { grassData, baseColors };
+  }, []);
+
+  const geo = useMemo(() => {
+    // Flat narrow cone as grass blade cluster
+    const g = new THREE.ConeGeometry(0.4, 1.2, 3);
+    g.translate(0, 0.6, 0);
+    return g;
+  }, []);
+
+  // Set matrices on mount
+  useMemo(() => {
+    // defer to useFrame for initial setup
+  }, []);
+
+  const initialized = useRef(false);
+
+  useFrame(() => {
+    if (!meshRef.current) return;
+
+    if (!initialized.current) {
+      const d = new THREE.Object3D();
+      grassData.forEach((p, i) => {
+        d.position.set(p.x, p.y, p.z);
+        d.scale.set(p.scale, p.scale, p.scale);
+        d.rotation.y = p.rotY;
+        d.updateMatrix();
+        meshRef.current!.setMatrixAt(i, d.matrix);
+      });
+      meshRef.current.instanceMatrix.needsUpdate = true;
+      const colorAttr = new Float32Array(grassData.length * 3);
+      grassData.forEach((_, i) => {
+        colorAttr[i * 3] = baseColors[i].r;
+        colorAttr[i * 3 + 1] = baseColors[i].g;
+        colorAttr[i * 3 + 2] = baseColors[i].b;
+      });
+      meshRef.current.instanceColor = new THREE.InstancedBufferAttribute(colorAttr, 3);
+      initialized.current = true;
+    }
+
+    // Seasonal color changes
+    const si = SEASON_INDEX[useSimulationStore.getState().season];
+    const colors = meshRef.current.instanceColor;
+    if (!colors) return;
+
+    for (let i = 0; i < grassData.length; i++) {
+      const bg = baseColors[i].g;
+      let r = baseColors[i].r, g = bg, b = baseColors[i].b;
+
+      if (si === 0) {
+        // Spring: vibrant green
+        g = bg + 0.15;
+      } else if (si === 1) {
+        // Summer: lush
+        g = bg + 0.1;
+      } else if (si === 2) {
+        // Autumn: golden-brown
+        r += 0.2;
+        g = bg - 0.05;
+      } else {
+        // Winter: pale/dead
+        r += 0.15;
+        g = bg - 0.1;
+        b += 0.05;
+      }
+
+      colors.setXYZ(i, r, g, b);
+    }
+    colors.needsUpdate = true;
+  });
+
+  return (
+    <instancedMesh
+      ref={meshRef}
+      args={[geo, undefined, grassData.length]}
+      receiveShadow
+    >
+      <meshLambertMaterial vertexColors />
+    </instancedMesh>
+  );
+}
