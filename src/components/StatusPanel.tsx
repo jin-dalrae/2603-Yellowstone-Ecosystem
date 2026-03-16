@@ -13,6 +13,9 @@ import { Area, AreaChart, XAxis, YAxis } from 'recharts';
 const chartConfig: ChartConfig = {
   wolves: { label: 'Wolves', color: 'hsl(0 70% 50%)' },
   elk: { label: 'Elk', color: 'hsl(142 50% 45%)' },
+  bears: { label: 'Bears', color: 'hsl(30 60% 35%)' },
+  beavers: { label: 'Beavers', color: 'hsl(25 50% 40%)' },
+  ravens: { label: 'Ravens', color: 'hsl(260 30% 30%)' },
 };
 
 const EVENT_ICONS: Record<SimEvent['type'], React.ReactNode> = {
