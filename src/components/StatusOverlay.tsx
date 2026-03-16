@@ -1,4 +1,5 @@
 import { useSimulationStore } from '@/store/simulationStore';
+import { useAgentStore } from '@/store/agentStore';
 import { Snowflake, Sun, Leaf, Flower2 } from 'lucide-react';
 
 const SEASON_ICONS = {
@@ -10,6 +11,7 @@ const SEASON_ICONS = {
 
 export function StatusOverlay() {
   const { day, year, season, isPlaying, timeSpeed } = useSimulationStore();
+  const { wolfCount, elkCount } = useAgentStore();
 
   const monthDay = getMonthDay(Math.floor(day));
 
@@ -36,6 +38,13 @@ export function StatusOverlay() {
 
       <div className="text-xs text-muted-foreground">
         {isPlaying ? `▶ ${timeSpeed.toFixed(1)}x` : '⏸ Paused'}
+      </div>
+
+      <div className="h-4 w-px bg-border" />
+
+      <div className="flex items-center gap-3 text-xs">
+        <span className="text-muted-foreground">🐺 <span className="text-foreground font-medium">{wolfCount}</span></span>
+        <span className="text-muted-foreground">🦌 <span className="text-foreground font-medium">{elkCount}</span></span>
       </div>
     </div>
   );
