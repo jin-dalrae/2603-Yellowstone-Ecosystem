@@ -11,6 +11,7 @@ const SEASON_ICONS = {
 
 export function StatusOverlay() {
   const { day, year, season, isPlaying, timeSpeed } = useSimulationStore();
+  const { wolfCount, elkCount } = useAgentStore();
 
   const monthDay = getMonthDay(Math.floor(day));
 
