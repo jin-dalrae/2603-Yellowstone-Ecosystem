@@ -14,6 +14,8 @@ interface AgentState {
   events: SimEvent[];
   populationHistory: PopSnapshot[];
   tickCounter: number;
+  selectedAgentId: number | null;
+  selectAgent: (id: number | null) => void;
   tickAgents: (delta: number) => void;
 }
 
