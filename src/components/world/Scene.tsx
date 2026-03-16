@@ -30,6 +30,7 @@ export function Scene() {
       <Terrain />
       <Water />
       <Vegetation />
+      <Animals />
     </Canvas>
   );
 }
