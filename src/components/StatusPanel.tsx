@@ -21,6 +21,7 @@ const EVENT_ICONS: Record<SimEvent['type'], React.ReactNode> = {
   extinction: <AlertTriangle className="w-3 h-3 text-destructive shrink-0" />,
   respawn: <AlertTriangle className="w-3 h-3 text-accent shrink-0" />,
   starvation: <Utensils className="w-3 h-3 text-muted-foreground shrink-0" />,
+  dam_built: <Utensils className="w-3 h-3 text-primary shrink-0" />,
 };
 
 function PopulationChart({ data }: { data: PopSnapshot[] }) {
