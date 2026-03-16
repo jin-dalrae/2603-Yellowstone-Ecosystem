@@ -15,6 +15,7 @@ const SEASONS: { key: Season; label: string; icon: React.ReactNode }[] = [
 const CAMERA_MODES: { key: CameraMode; label: string; icon: React.ReactNode }[] = [
   { key: 'orbit', label: 'Orbit', icon: <Orbit className="w-4 h-4" /> },
   { key: 'god', label: 'God View', icon: <Eye className="w-4 h-4" /> },
+  { key: 'follow', label: 'Follow', icon: <Orbit className="w-4 h-4" /> },
 ];
 
 function SliderRow({ label, value, min, max, step, onChange }: {
