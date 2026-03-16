@@ -12,6 +12,24 @@ export interface Agent {
   alive: boolean;
 }
 
+export interface SimEvent {
+  id: number;
+  type: 'kill' | 'birth' | 'extinction' | 'respawn' | 'starvation';
+  species: 'wolf' | 'elk';
+  timestamp: number;
+  message: string;
+}
+
+let eventIdCounter = 0;
+function makeEvent(type: SimEvent['type'], species: SimEvent['species'], message: string): SimEvent {
+  return { id: eventIdCounter++, type, species, timestamp: Date.now(), message };
+}
+
+export interface TickResult {
+  agents: Agent[];
+  events: SimEvent[];
+}
+
 const WORLD_HALF = 90; // stay within terrain bounds
 const MAX_SPEED_ELK = 12;
 const MAX_SPEED_WOLF = 14;
@@ -156,10 +174,11 @@ export function createAgent(type: 'wolf' | 'elk', x?: number, z?: number): Agent
   };
 }
 
-export function tickAgents(agents: Agent[], delta: number): Agent[] {
+export function tickAgents(agents: Agent[], delta: number): TickResult {
   const wolves = agents.filter(a => a.type === 'wolf' && a.alive);
   const elks = agents.filter(a => a.type === 'elk' && a.alive);
   const newBorns: Agent[] = [];
+  const events: SimEvent[] = [];
 
   for (const agent of agents) {
     if (!agent.alive) continue;
@@ -221,11 +240,12 @@ export function tickAgents(agents: Agent[], delta: number): Agent[] {
     // Death by starvation
     if (agent.energy <= 0) {
       agent.alive = false;
+      events.push(makeEvent('starvation', agent.type, `A ${agent.type} starved`));
     }
 
     // Old age death
-    if (agent.type === 'wolf' && agent.age > 120) agent.alive = false;
-    if (agent.type === 'elk' && agent.age > 150) agent.alive = false;
+    if (agent.type === 'wolf' && agent.age > 120) { agent.alive = false; }
+    if (agent.type === 'elk' && agent.age > 150) { agent.alive = false; }
   }
 
   // Wolf kills: check proximity
@@ -239,7 +259,8 @@ export function tickAgents(agents: Agent[], delta: number): Agent[] {
       if (dist < KILL_DIST) {
         elk.alive = false;
         wolf.energy = Math.min(100, wolf.energy + ENERGY_PER_KILL);
-        break; // one kill per tick
+        events.push(makeEvent('kill', 'wolf', 'Wolf hunted an elk'));
+        break;
       }
     }
   }
@@ -253,6 +274,7 @@ export function tickAgents(agents: Agent[], delta: number): Agent[] {
       if (w.energy > REPRODUCE_ENERGY && Math.random() < 0.002) {
         w.energy -= 30;
         newBorns.push(createAgent('wolf', w.x + (Math.random() - 0.5) * 5, w.z + (Math.random() - 0.5) * 5));
+        events.push(makeEvent('birth', 'wolf', 'Wolf pup born'));
         break;
       }
     }
@@ -263,6 +285,7 @@ export function tickAgents(agents: Agent[], delta: number): Agent[] {
       if (e.energy > REPRODUCE_ENERGY && Math.random() < 0.005) {
         e.energy -= 25;
         newBorns.push(createAgent('elk', e.x + (Math.random() - 0.5) * 5, e.z + (Math.random() - 0.5) * 5));
+        events.push(makeEvent('birth', 'elk', 'Elk calf born'));
         break;
       }
     }
@@ -271,12 +294,14 @@ export function tickAgents(agents: Agent[], delta: number): Agent[] {
   // Population floor: respawn if extinct
   if (aliveWolves.length === 0) {
     for (let i = 0; i < 5; i++) newBorns.push(createAgent('wolf'));
+    events.push(makeEvent('extinction', 'wolf', 'Wolves went extinct — pack respawned'));
   }
   if (aliveElks.length === 0) {
     for (let i = 0; i < 15; i++) newBorns.push(createAgent('elk'));
+    events.push(makeEvent('extinction', 'elk', 'Elk went extinct — herd respawned'));
   }
 
   // Remove long-dead agents, keep alive + newborns
   const result = agents.filter(a => a.alive).concat(newBorns);
-  return result;
+  return { agents: result, events };
 }
