@@ -17,7 +17,10 @@ export function AnimalDetailPanel() {
 
   const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
   const isWolf = agent.type === 'wolf';
-  const maxAge = isWolf ? 120 : 150;
+  const maxAges: Record<string, number> = { wolf: 120, elk: 150, bear: 180, beaver: 100, raven: 80 };
+  const maxAge = maxAges[agent.type] ?? 120;
+  const emojis: Record<string, string> = { wolf: '🐺', elk: '🦌', bear: '🐻', beaver: '🦫', raven: '🐦‍⬛' };
+  const emoji = emojis[agent.type] ?? '🐾';
 
   const deselect = () => {
     selectAgent(null);
