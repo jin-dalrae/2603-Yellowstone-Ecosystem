@@ -285,6 +285,7 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
       if (e.energy > REPRODUCE_ENERGY && Math.random() < 0.005) {
         e.energy -= 25;
         newBorns.push(createAgent('elk', e.x + (Math.random() - 0.5) * 5, e.z + (Math.random() - 0.5) * 5));
+        events.push(makeEvent('birth', 'elk', 'Elk calf born'));
         break;
       }
     }
