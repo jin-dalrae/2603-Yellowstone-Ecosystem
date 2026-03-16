@@ -1,4 +1,5 @@
 import { useSimulationStore } from '@/store/simulationStore';
+import { useAgentStore } from '@/store/agentStore';
 import { Snowflake, Sun, Leaf, Flower2 } from 'lucide-react';
 
 const SEASON_ICONS = {
