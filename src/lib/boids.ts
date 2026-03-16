@@ -240,11 +240,12 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
     // Death by starvation
     if (agent.energy <= 0) {
       agent.alive = false;
+      events.push(makeEvent('starvation', agent.type, `A ${agent.type} starved`));
     }
 
     // Old age death
-    if (agent.type === 'wolf' && agent.age > 120) agent.alive = false;
-    if (agent.type === 'elk' && agent.age > 150) agent.alive = false;
+    if (agent.type === 'wolf' && agent.age > 120) { agent.alive = false; }
+    if (agent.type === 'elk' && agent.age > 150) { agent.alive = false; }
   }
 
   // Wolf kills: check proximity
