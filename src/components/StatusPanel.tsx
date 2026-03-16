@@ -16,6 +16,10 @@ const chartConfig: ChartConfig = {
   bears: { label: 'Bears', color: 'hsl(30 60% 35%)' },
   beavers: { label: 'Beavers', color: 'hsl(25 50% 40%)' },
   ravens: { label: 'Ravens', color: 'hsl(260 30% 30%)' },
+  bison: { label: 'Bison', color: 'hsl(20 55% 30%)' },
+  moose: { label: 'Moose', color: 'hsl(35 45% 35%)' },
+  coyotes: { label: 'Coyotes', color: 'hsl(45 50% 50%)' },
+  ospreys: { label: 'Osprey', color: 'hsl(210 60% 50%)' },
 };
 
 const EVENT_ICONS: Record<SimEvent['type'], React.ReactNode> = {
@@ -36,39 +40,47 @@ function PopulationChart({ data }: { data: PopSnapshot[] }) {
     );
   }
 
+  const gradients = [
+    { id: 'wolfGrad', color: 'hsl(0 70% 50%)' },
+    { id: 'elkGrad', color: 'hsl(142 50% 45%)' },
+    { id: 'bearGrad', color: 'hsl(30 60% 35%)' },
+    { id: 'beaverGrad', color: 'hsl(25 50% 40%)' },
+    { id: 'ravenGrad', color: 'hsl(260 30% 30%)' },
+    { id: 'bisonGrad', color: 'hsl(20 55% 30%)' },
+    { id: 'mooseGrad', color: 'hsl(35 45% 35%)' },
+    { id: 'coyoteGrad', color: 'hsl(45 50% 50%)' },
+    { id: 'ospreyGrad', color: 'hsl(210 60% 50%)' },
+  ];
+
+  const series = [
+    { key: 'wolves', stroke: 'hsl(0 70% 50%)', fill: 'url(#wolfGrad)', w: 2 },
+    { key: 'elk', stroke: 'hsl(142 50% 45%)', fill: 'url(#elkGrad)', w: 2 },
+    { key: 'bears', stroke: 'hsl(30 60% 35%)', fill: 'url(#bearGrad)', w: 1.5 },
+    { key: 'beavers', stroke: 'hsl(25 50% 40%)', fill: 'url(#beaverGrad)', w: 1.5 },
+    { key: 'ravens', stroke: 'hsl(260 30% 30%)', fill: 'url(#ravenGrad)', w: 1.5 },
+    { key: 'bison', stroke: 'hsl(20 55% 30%)', fill: 'url(#bisonGrad)', w: 1.5 },
+    { key: 'moose', stroke: 'hsl(35 45% 35%)', fill: 'url(#mooseGrad)', w: 1 },
+    { key: 'coyotes', stroke: 'hsl(45 50% 50%)', fill: 'url(#coyoteGrad)', w: 1 },
+    { key: 'ospreys', stroke: 'hsl(210 60% 50%)', fill: 'url(#ospreyGrad)', w: 1 },
+  ];
+
   return (
     <ChartContainer config={chartConfig} className="h-36 w-full">
       <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
         <defs>
-          <linearGradient id="wolfGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="hsl(0 70% 50%)" stopOpacity={0.4} />
-            <stop offset="100%" stopColor="hsl(0 70% 50%)" stopOpacity={0.05} />
-          </linearGradient>
-          <linearGradient id="elkGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="hsl(142 50% 45%)" stopOpacity={0.4} />
-            <stop offset="100%" stopColor="hsl(142 50% 45%)" stopOpacity={0.05} />
-          </linearGradient>
-          <linearGradient id="bearGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="hsl(30 60% 35%)" stopOpacity={0.4} />
-            <stop offset="100%" stopColor="hsl(30 60% 35%)" stopOpacity={0.05} />
-          </linearGradient>
-          <linearGradient id="beaverGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="hsl(25 50% 40%)" stopOpacity={0.4} />
-            <stop offset="100%" stopColor="hsl(25 50% 40%)" stopOpacity={0.05} />
-          </linearGradient>
-          <linearGradient id="ravenGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="hsl(260 30% 30%)" stopOpacity={0.4} />
-            <stop offset="100%" stopColor="hsl(260 30% 30%)" stopOpacity={0.05} />
-          </linearGradient>
+          {gradients.map(g => (
+            <linearGradient key={g.id} id={g.id} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={g.color} stopOpacity={0.4} />
+              <stop offset="100%" stopColor={g.color} stopOpacity={0.05} />
+            </linearGradient>
+          ))}
         </defs>
         <XAxis dataKey="tick" hide />
         <YAxis tick={{ fontSize: 10 }} width={30} />
         <ChartTooltip content={<ChartTooltipContent />} />
-        <Area type="monotone" dataKey="wolves" stroke="hsl(0 70% 50%)" fill="url(#wolfGrad)" strokeWidth={2} dot={false} />
-        <Area type="monotone" dataKey="elk" stroke="hsl(142 50% 45%)" fill="url(#elkGrad)" strokeWidth={2} dot={false} />
-        <Area type="monotone" dataKey="bears" stroke="hsl(30 60% 35%)" fill="url(#bearGrad)" strokeWidth={1.5} dot={false} />
-        <Area type="monotone" dataKey="beavers" stroke="hsl(25 50% 40%)" fill="url(#beaverGrad)" strokeWidth={1.5} dot={false} />
-        <Area type="monotone" dataKey="ravens" stroke="hsl(260 30% 30%)" fill="url(#ravenGrad)" strokeWidth={1.5} dot={false} />
+        {series.map(s => (
+          <Area key={s.key} type="monotone" dataKey={s.key} stroke={s.stroke} fill={s.fill} strokeWidth={s.w} dot={false} />
+        ))}
       </AreaChart>
     </ChartContainer>
   );
@@ -100,7 +112,11 @@ function EventFeed({ events }: { events: SimEvent[] }) {
 
 export function StatusPanel() {
   const [collapsed, setCollapsed] = useState(false);
-  const { wolfCount, elkCount, bearCount, beaverCount, ravenCount, populationHistory, events } = useAgentStore();
+  const {
+    wolfCount, elkCount, bearCount, beaverCount, ravenCount,
+    bisonCount, mooseCount, coyoteCount, ospreyCount,
+    populationHistory, events,
+  } = useAgentStore();
 
   if (collapsed) {
     return (
@@ -114,10 +130,22 @@ export function StatusPanel() {
     );
   }
 
+  const speciesList = [
+    { emoji: '🐺', label: 'Wolves', count: wolfCount },
+    { emoji: '🦌', label: 'Elk', count: elkCount },
+    { emoji: '🐻', label: 'Bears', count: bearCount },
+    { emoji: '🦫', label: 'Beavers', count: beaverCount },
+    { emoji: '🐦‍⬛', label: 'Ravens', count: ravenCount },
+    { emoji: '🦬', label: 'Bison', count: bisonCount },
+    { emoji: '🫎', label: 'Moose', count: mooseCount },
+    { emoji: '🐺', label: 'Coyotes', count: coyoteCount },
+    { emoji: '🦅', label: 'Osprey', count: ospreyCount },
+  ];
+
   return (
-    <div className="absolute top-4 right-4 z-50 w-72 bg-card/85 backdrop-blur-xl border border-border rounded-xl shadow-2xl overflow-hidden">
+    <div className="absolute top-4 right-4 z-50 w-72 bg-card/85 backdrop-blur-xl border border-border rounded-xl shadow-2xl overflow-hidden max-h-[calc(100vh-2rem)] flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
         <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase">
           Ecosystem
         </h2>
@@ -129,16 +157,10 @@ export function StatusPanel() {
         </button>
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 overflow-y-auto flex-1">
         {/* Population counts */}
         <div className="grid grid-cols-3 gap-1.5">
-          {[
-            { emoji: '🐺', label: 'Wolves', count: wolfCount },
-            { emoji: '🦌', label: 'Elk', count: elkCount },
-            { emoji: '🐻', label: 'Bears', count: bearCount },
-            { emoji: '🦫', label: 'Beavers', count: beaverCount },
-            { emoji: '🐦‍⬛', label: 'Ravens', count: ravenCount },
-          ].map((s) => (
+          {speciesList.map((s) => (
             <div key={s.label} className="bg-secondary/40 rounded-lg p-2 text-center">
               <div className="text-sm font-bold text-foreground">{s.count}</div>
               <div className="text-[9px] text-muted-foreground uppercase tracking-wider">
