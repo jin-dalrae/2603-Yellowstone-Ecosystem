@@ -174,10 +174,11 @@ export function createAgent(type: 'wolf' | 'elk', x?: number, z?: number): Agent
   };
 }
 
-export function tickAgents(agents: Agent[], delta: number): Agent[] {
+export function tickAgents(agents: Agent[], delta: number): TickResult {
   const wolves = agents.filter(a => a.type === 'wolf' && a.alive);
   const elks = agents.filter(a => a.type === 'elk' && a.alive);
   const newBorns: Agent[] = [];
+  const events: SimEvent[] = [];
 
   for (const agent of agents) {
     if (!agent.alive) continue;
