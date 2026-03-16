@@ -2,10 +2,10 @@ import { useSimulationStore } from '@/store/simulationStore';
 import { Snowflake, Sun, Leaf, Flower2 } from 'lucide-react';
 
 const SEASON_ICONS = {
-  spring: <Flower2 className="w-4 h-4 text-green-400" />,
-  summer: <Sun className="w-4 h-4 text-amber-400" />,
-  autumn: <Leaf className="w-4 h-4 text-orange-400" />,
-  winter: <Snowflake className="w-4 h-4 text-blue-300" />,
+  spring: <Flower2 className="w-4 h-4 text-accent" />,
+  summer: <Sun className="w-4 h-4 text-primary" />,
+  autumn: <Leaf className="w-4 h-4 text-destructive" />,
+  winter: <Snowflake className="w-4 h-4 text-muted-foreground" />,
 };
 
 export function StatusOverlay() {
