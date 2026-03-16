@@ -40,6 +40,95 @@ function SliderRow({ label, value, min, max, step, onChange }: {
   );
 }
 
+interface SpeciesSection {
+  emoji: string;
+  label: string;
+  sliders: { label: string; key: string; min: number; max: number; step: number }[];
+}
+
+const SPECIES_SECTIONS: SpeciesSection[] = [
+  {
+    emoji: '🐺', label: 'Wolf',
+    sliders: [
+      { label: 'Energy Drain /s', key: 'wolfEnergyDrain', min: 0.5, max: 8, step: 0.5 },
+      { label: 'Chase Distance', key: 'wolfChaseDist', min: 10, max: 60, step: 5 },
+      { label: 'Repro Chance', key: 'wolfReproChance', min: 0.001, max: 0.01, step: 0.001 },
+      { label: 'Max Population', key: 'wolfMaxPop', min: 5, max: 50, step: 5 },
+    ],
+  },
+  {
+    emoji: '🦌', label: 'Elk',
+    sliders: [
+      { label: 'Energy Drain /s', key: 'elkEnergyDrain', min: 0.2, max: 4, step: 0.2 },
+      { label: 'Graze Rate /s', key: 'elkGrazeRate', min: 1, max: 8, step: 0.5 },
+      { label: 'Flee Distance', key: 'elkFleeDist', min: 10, max: 60, step: 5 },
+      { label: 'Repro Chance', key: 'elkReproChance', min: 0.001, max: 0.02, step: 0.001 },
+      { label: 'Max Population', key: 'elkMaxPop', min: 10, max: 100, step: 10 },
+    ],
+  },
+  {
+    emoji: '🐻', label: 'Bear',
+    sliders: [
+      { label: 'Energy Drain /s', key: 'bearEnergyDrain', min: 0.5, max: 5, step: 0.5 },
+      { label: 'Chase Distance', key: 'bearChaseDist', min: 10, max: 50, step: 5 },
+      { label: 'Repro Chance', key: 'bearReproChance', min: 0.0005, max: 0.005, step: 0.0005 },
+      { label: 'Max Population', key: 'bearMaxPop', min: 2, max: 20, step: 1 },
+    ],
+  },
+  {
+    emoji: '🦫', label: 'Beaver',
+    sliders: [
+      { label: 'Energy Drain /s', key: 'beaverEnergyDrain', min: 0.2, max: 3, step: 0.2 },
+      { label: 'Repro Chance', key: 'beaverReproChance', min: 0.001, max: 0.01, step: 0.001 },
+      { label: 'Max Population', key: 'beaverMaxPop', min: 3, max: 25, step: 1 },
+    ],
+  },
+  {
+    emoji: '🐦‍⬛', label: 'Raven',
+    sliders: [
+      { label: 'Repro Chance', key: 'ravenReproChance', min: 0.001, max: 0.01, step: 0.001 },
+      { label: 'Max Population', key: 'ravenMaxPop', min: 5, max: 40, step: 5 },
+    ],
+  },
+  {
+    emoji: '🦬', label: 'Bison',
+    sliders: [
+      { label: 'Energy Drain /s', key: 'bisonEnergyDrain', min: 0.2, max: 3, step: 0.2 },
+      { label: 'Graze Rate /s', key: 'bisonGrazeRate', min: 1, max: 8, step: 0.5 },
+      { label: 'Flee Distance', key: 'bisonFleeDist', min: 10, max: 40, step: 5 },
+      { label: 'Repro Chance', key: 'bisonReproChance', min: 0.001, max: 0.01, step: 0.001 },
+      { label: 'Max Population', key: 'bisonMaxPop', min: 10, max: 60, step: 5 },
+    ],
+  },
+  {
+    emoji: '🫎', label: 'Moose',
+    sliders: [
+      { label: 'Energy Drain /s', key: 'mooseEnergyDrain', min: 0.2, max: 4, step: 0.2 },
+      { label: 'Graze Rate /s', key: 'mooseGrazeRate', min: 1, max: 6, step: 0.5 },
+      { label: 'Flee Distance', key: 'mooseFleeDist', min: 10, max: 50, step: 5 },
+      { label: 'Repro Chance', key: 'mooseReproChance', min: 0.001, max: 0.01, step: 0.001 },
+      { label: 'Max Population', key: 'mooseMaxPop', min: 3, max: 25, step: 1 },
+    ],
+  },
+  {
+    emoji: '🐺', label: 'Coyote',
+    sliders: [
+      { label: 'Energy Drain /s', key: 'coyoteEnergyDrain', min: 0.5, max: 5, step: 0.5 },
+      { label: 'Repro Chance', key: 'coyoteReproChance', min: 0.001, max: 0.01, step: 0.001 },
+      { label: 'Max Population', key: 'coyoteMaxPop', min: 5, max: 35, step: 5 },
+    ],
+  },
+  {
+    emoji: '🦅', label: 'Osprey',
+    sliders: [
+      { label: 'Energy Drain /s', key: 'ospreyEnergyDrain', min: 0.2, max: 3, step: 0.2 },
+      { label: 'Fish Rate /s', key: 'ospreyFishRate', min: 0.5, max: 5, step: 0.5 },
+      { label: 'Repro Chance', key: 'ospreyReproChance', min: 0.001, max: 0.008, step: 0.001 },
+      { label: 'Max Population', key: 'ospreyMaxPop', min: 2, max: 15, step: 1 },
+    ],
+  },
+];
+
 export function ControlPanel() {
   const [collapsed, setCollapsed] = useState(true);
   const [tab, setTab] = useState<'sim' | 'eco'>('sim');
@@ -161,62 +250,27 @@ export function ControlPanel() {
           </>
         ) : (
           <>
-            {/* Ecosystem controls */}
-            <div>
-              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-3 block">🐺 Wolf Parameters</label>
-              <div className="space-y-3">
-                <SliderRow label="Energy Drain /s" value={eco.wolfEnergyDrain} min={0.5} max={8} step={0.5} onChange={(v) => eco.set({ wolfEnergyDrain: v })} />
-                <SliderRow label="Chase Distance" value={eco.wolfChaseDist} min={10} max={60} step={5} onChange={(v) => eco.set({ wolfChaseDist: v })} />
-                <SliderRow label="Repro Chance" value={eco.wolfReproChance} min={0.001} max={0.01} step={0.001} onChange={(v) => eco.set({ wolfReproChance: v })} />
-                <SliderRow label="Max Population" value={eco.wolfMaxPop} min={5} max={50} step={5} onChange={(v) => eco.set({ wolfMaxPop: v })} />
+            {SPECIES_SECTIONS.map((section, idx) => (
+              <div key={section.label}>
+                {idx > 0 && <div className="h-px bg-border mb-5" />}
+                <label className="text-xs text-muted-foreground uppercase tracking-wider mb-3 block">
+                  {section.emoji} {section.label} Parameters
+                </label>
+                <div className="space-y-3">
+                  {section.sliders.map((s) => (
+                    <SliderRow
+                      key={s.key}
+                      label={s.label}
+                      value={(eco as any)[s.key]}
+                      min={s.min}
+                      max={s.max}
+                      step={s.step}
+                      onChange={(v) => eco.set({ [s.key]: v })}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-
-            <div className="h-px bg-border" />
-
-            <div>
-              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-3 block">🦌 Elk Parameters</label>
-              <div className="space-y-3">
-                <SliderRow label="Energy Drain /s" value={eco.elkEnergyDrain} min={0.2} max={4} step={0.2} onChange={(v) => eco.set({ elkEnergyDrain: v })} />
-                <SliderRow label="Graze Rate /s" value={eco.elkGrazeRate} min={1} max={8} step={0.5} onChange={(v) => eco.set({ elkGrazeRate: v })} />
-                <SliderRow label="Flee Distance" value={eco.elkFleeDist} min={10} max={60} step={5} onChange={(v) => eco.set({ elkFleeDist: v })} />
-                <SliderRow label="Repro Chance" value={eco.elkReproChance} min={0.001} max={0.02} step={0.001} onChange={(v) => eco.set({ elkReproChance: v })} />
-                <SliderRow label="Max Population" value={eco.elkMaxPop} min={10} max={100} step={10} onChange={(v) => eco.set({ elkMaxPop: v })} />
-              </div>
-            </div>
-
-            <div className="h-px bg-border" />
-
-            <div>
-              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-3 block">🐻 Bear Parameters</label>
-              <div className="space-y-3">
-                <SliderRow label="Energy Drain /s" value={eco.bearEnergyDrain} min={0.5} max={5} step={0.5} onChange={(v) => eco.set({ bearEnergyDrain: v })} />
-                <SliderRow label="Chase Distance" value={eco.bearChaseDist} min={10} max={50} step={5} onChange={(v) => eco.set({ bearChaseDist: v })} />
-                <SliderRow label="Repro Chance" value={eco.bearReproChance} min={0.0005} max={0.005} step={0.0005} onChange={(v) => eco.set({ bearReproChance: v })} />
-                <SliderRow label="Max Population" value={eco.bearMaxPop} min={2} max={20} step={1} onChange={(v) => eco.set({ bearMaxPop: v })} />
-              </div>
-            </div>
-
-            <div className="h-px bg-border" />
-
-            <div>
-              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-3 block">🦫 Beaver Parameters</label>
-              <div className="space-y-3">
-                <SliderRow label="Energy Drain /s" value={eco.beaverEnergyDrain} min={0.2} max={3} step={0.2} onChange={(v) => eco.set({ beaverEnergyDrain: v })} />
-                <SliderRow label="Repro Chance" value={eco.beaverReproChance} min={0.001} max={0.01} step={0.001} onChange={(v) => eco.set({ beaverReproChance: v })} />
-                <SliderRow label="Max Population" value={eco.beaverMaxPop} min={3} max={25} step={1} onChange={(v) => eco.set({ beaverMaxPop: v })} />
-              </div>
-            </div>
-
-            <div className="h-px bg-border" />
-
-            <div>
-              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-3 block">🐦‍⬛ Raven Parameters</label>
-              <div className="space-y-3">
-                <SliderRow label="Repro Chance" value={eco.ravenReproChance} min={0.001} max={0.01} step={0.001} onChange={(v) => eco.set({ ravenReproChance: v })} />
-                <SliderRow label="Max Population" value={eco.ravenMaxPop} min={5} max={40} step={5} onChange={(v) => eco.set({ ravenMaxPop: v })} />
-              </div>
-            </div>
+            ))}
 
             <div className="h-px bg-border" />
 

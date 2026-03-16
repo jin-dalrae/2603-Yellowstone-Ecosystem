@@ -12,6 +12,10 @@ const MAX_COUNTS: Record<AgentType, number> = {
   bear: 15,
   beaver: 20,
   raven: 25,
+  bison: 50,
+  moose: 20,
+  coyote: 25,
+  osprey: 15,
 };
 
 function getTerrainHeight(x: number, z: number): number {
@@ -55,10 +59,35 @@ function createBeaverGeo(): THREE.BufferGeometry {
   return geo;
 }
 function createRavenGeo(): THREE.BufferGeometry {
-  // Small diamond shape for flying birds
   const geo = new THREE.OctahedronGeometry(0.3, 0);
   geo.scale(1.5, 0.5, 1);
-  geo.translate(0, 0, 0);
+  return geo;
+}
+function createBisonGeo(): THREE.BufferGeometry {
+  // Large bulky shape — wide sphere
+  const geo = new THREE.SphereGeometry(1.0, 6, 4);
+  geo.scale(1.2, 0.8, 1.5);
+  geo.translate(0, 0.8, 0);
+  return geo;
+}
+function createMooseGeo(): THREE.BufferGeometry {
+  // Tall, narrow cone
+  const geo = new THREE.ConeGeometry(0.5, 2.6, 5);
+  geo.rotateX(Math.PI / 2);
+  geo.translate(0, 1.0, 0);
+  return geo;
+}
+function createCoyoteGeo(): THREE.BufferGeometry {
+  // Smaller wolf-like shape
+  const geo = new THREE.ConeGeometry(0.35, 1.4, 4);
+  geo.rotateX(Math.PI / 2);
+  geo.translate(0, 0.5, 0);
+  return geo;
+}
+function createOspreyGeo(): THREE.BufferGeometry {
+  // Winged diamond shape, wider than raven
+  const geo = new THREE.OctahedronGeometry(0.35, 0);
+  geo.scale(2.0, 0.4, 1.2);
   return geo;
 }
 
@@ -70,6 +99,10 @@ const COLORS: Record<AgentType, THREE.Color> = {
   bear: new THREE.Color(0.3, 0.2, 0.12),
   beaver: new THREE.Color(0.4, 0.28, 0.15),
   raven: new THREE.Color(0.1, 0.1, 0.12),
+  bison: new THREE.Color(0.25, 0.18, 0.1),
+  moose: new THREE.Color(0.35, 0.25, 0.15),
+  coyote: new THREE.Color(0.5, 0.45, 0.35),
+  osprey: new THREE.Color(0.2, 0.2, 0.25),
 };
 const SELECTED_COLORS: Record<AgentType, THREE.Color> = {
   wolf: new THREE.Color(0.9, 0.5, 0.2),
@@ -77,10 +110,14 @@ const SELECTED_COLORS: Record<AgentType, THREE.Color> = {
   bear: new THREE.Color(0.9, 0.6, 0.1),
   beaver: new THREE.Color(0.8, 0.6, 0.2),
   raven: new THREE.Color(0.7, 0.5, 0.9),
+  bison: new THREE.Color(0.9, 0.55, 0.15),
+  moose: new THREE.Color(0.85, 0.65, 0.2),
+  coyote: new THREE.Color(0.9, 0.7, 0.3),
+  osprey: new THREE.Color(0.5, 0.7, 0.95),
 };
 
-// Raven flight height offset
-const RAVEN_FLY_HEIGHT = 8;
+const FLYING_TYPES = new Set<AgentType>(['raven', 'osprey']);
+const FLY_HEIGHT = 8;
 
 interface SpeciesMeshProps {
   type: AgentType;
@@ -92,6 +129,7 @@ function SpeciesMesh({ type, geo }: SpeciesMeshProps) {
   const idsRef = useRef<number[]>([]);
   const mat = useMemo(() => new THREE.MeshLambertMaterial({ color: COLORS[type] }), [type]);
   const maxCount = MAX_COUNTS[type];
+  const isFlying = FLYING_TYPES.has(type);
 
   const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
@@ -123,7 +161,7 @@ function SpeciesMesh({ type, geo }: SpeciesMeshProps) {
     for (let i = 0; i < maxCount; i++) {
       if (i < alive.length) {
         const a = alive[i];
-        const y = getTerrainHeight(a.x, a.z) + (type === 'raven' ? RAVEN_FLY_HEIGHT + Math.sin(a.age * 2 + a.id) * 1.5 : 0);
+        const y = getTerrainHeight(a.x, a.z) + (isFlying ? FLY_HEIGHT + Math.sin(a.age * 2 + a.id) * 1.5 : 0);
         dummy.position.set(a.x, y, a.z);
         const angle = Math.atan2(a.vx, a.vz);
         dummy.rotation.set(0, angle, 0);
@@ -158,6 +196,10 @@ export function Animals() {
   const bearGeo = useMemo(createBearGeo, []);
   const beaverGeo = useMemo(createBeaverGeo, []);
   const ravenGeo = useMemo(createRavenGeo, []);
+  const bisonGeo = useMemo(createBisonGeo, []);
+  const mooseGeo = useMemo(createMooseGeo, []);
+  const coyoteGeo = useMemo(createCoyoteGeo, []);
+  const ospreyGeo = useMemo(createOspreyGeo, []);
 
   // Tick agent simulation
   useFrame((_, delta) => {
@@ -166,7 +208,6 @@ export function Animals() {
     const scaledDelta = delta * simState.timeSpeed;
     useAgentStore.getState().tickAgents(scaledDelta);
 
-    // Deselect if agent died
     const selectedId = useAgentStore.getState().selectedAgentId;
     if (selectedId !== null) {
       const sel = useAgentStore.getState().agents.find(a => a.id === selectedId);
@@ -186,6 +227,10 @@ export function Animals() {
       <SpeciesMesh type="bear" geo={bearGeo} />
       <SpeciesMesh type="beaver" geo={beaverGeo} />
       <SpeciesMesh type="raven" geo={ravenGeo} />
+      <SpeciesMesh type="bison" geo={bisonGeo} />
+      <SpeciesMesh type="moose" geo={mooseGeo} />
+      <SpeciesMesh type="coyote" geo={coyoteGeo} />
+      <SpeciesMesh type="osprey" geo={ospreyGeo} />
     </>
   );
 }

@@ -29,6 +29,31 @@ export interface EcoConfig {
   ravenMaxPop: number;
   ravenReproChance: number;
 
+  // Bison
+  bisonEnergyDrain: number;
+  bisonGrazeRate: number;
+  bisonFleeDist: number;
+  bisonReproChance: number;
+  bisonMaxPop: number;
+
+  // Moose
+  mooseEnergyDrain: number;
+  mooseGrazeRate: number;
+  mooseFleeDist: number;
+  mooseReproChance: number;
+  mooseMaxPop: number;
+
+  // Coyote
+  coyoteEnergyDrain: number;
+  coyoteReproChance: number;
+  coyoteMaxPop: number;
+
+  // Osprey
+  ospreyEnergyDrain: number;
+  ospreyFishRate: number;
+  ospreyReproChance: number;
+  ospreyMaxPop: number;
+
   // Shared
   energyPerKill: number;
   reproduceEnergy: number;
@@ -61,6 +86,27 @@ const DEFAULTS = {
 
   ravenMaxPop: 20,
   ravenReproChance: 0.004,
+
+  bisonEnergyDrain: 0.7,
+  bisonGrazeRate: 3.5,
+  bisonFleeDist: 20,
+  bisonReproChance: 0.004,
+  bisonMaxPop: 40,
+
+  mooseEnergyDrain: 0.9,
+  mooseGrazeRate: 2.5,
+  mooseFleeDist: 25,
+  mooseReproChance: 0.003,
+  mooseMaxPop: 15,
+
+  coyoteEnergyDrain: 1.5,
+  coyoteReproChance: 0.003,
+  coyoteMaxPop: 20,
+
+  ospreyEnergyDrain: 0.8,
+  ospreyFishRate: 2.0,
+  ospreyReproChance: 0.002,
+  ospreyMaxPop: 10,
 
   energyPerKill: 60,
   reproduceEnergy: 80,

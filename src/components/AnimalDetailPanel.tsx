@@ -2,6 +2,16 @@ import { useAgentStore } from '@/store/agentStore';
 import { useSimulationStore } from '@/store/simulationStore';
 import { X, Crosshair } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import type { AgentType } from '@/lib/boids';
+
+const MAX_AGES: Record<AgentType, number> = {
+  wolf: 120, elk: 150, bear: 180, beaver: 100, raven: 80,
+  bison: 200, moose: 160, coyote: 100, osprey: 90,
+};
+const EMOJIS: Record<AgentType, string> = {
+  wolf: '🐺', elk: '🦌', bear: '🐻', beaver: '🦫', raven: '🐦‍⬛',
+  bison: '🦬', moose: '🫎', coyote: '🐺', osprey: '🦅',
+};
 
 export function AnimalDetailPanel() {
   const selectedId = useAgentStore((s) => s.selectedAgentId);
@@ -16,11 +26,8 @@ export function AnimalDetailPanel() {
   if (!agent || !agent.alive) return null;
 
   const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
-  const isWolf = agent.type === 'wolf';
-  const maxAges: Record<string, number> = { wolf: 120, elk: 150, bear: 180, beaver: 100, raven: 80 };
-  const maxAge = maxAges[agent.type] ?? 120;
-  const emojis: Record<string, string> = { wolf: '🐺', elk: '🦌', bear: '🐻', beaver: '🦫', raven: '🐦‍⬛' };
-  const emoji = emojis[agent.type] ?? '🐾';
+  const maxAge = MAX_AGES[agent.type] ?? 120;
+  const emoji = EMOJIS[agent.type] ?? '🐾';
 
   const deselect = () => {
     selectAgent(null);
@@ -33,7 +40,6 @@ export function AnimalDetailPanel() {
 
   return (
     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 w-72 bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-2xl overflow-hidden">
-      {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
         <div className="flex items-center gap-2">
           <span className="text-base">{emoji}</span>
@@ -62,33 +68,23 @@ export function AnimalDetailPanel() {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="p-4 space-y-3">
-        {/* Energy */}
         <div>
           <div className="flex justify-between text-[10px] mb-1">
             <span className="text-muted-foreground uppercase tracking-wider">Energy</span>
             <span className="text-foreground font-medium tabular-nums">{agent.energy.toFixed(1)}</span>
           </div>
-          <Progress
-            value={agent.energy}
-            className="h-1.5"
-          />
+          <Progress value={agent.energy} className="h-1.5" />
         </div>
 
-        {/* Age */}
         <div>
           <div className="flex justify-between text-[10px] mb-1">
             <span className="text-muted-foreground uppercase tracking-wider">Age</span>
             <span className="text-foreground font-medium tabular-nums">{agent.age.toFixed(0)}s / {maxAge}s</span>
           </div>
-          <Progress
-            value={(agent.age / maxAge) * 100}
-            className="h-1.5"
-          />
+          <Progress value={(agent.age / maxAge) * 100} className="h-1.5" />
         </div>
 
-        {/* Speed & Position */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-0.5">Speed</span>

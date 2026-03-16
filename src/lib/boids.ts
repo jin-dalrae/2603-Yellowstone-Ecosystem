@@ -2,7 +2,7 @@
 
 import { useEcoConfigStore } from '@/store/ecoConfigStore';
 
-export type AgentType = 'wolf' | 'elk' | 'bear' | 'beaver' | 'raven';
+export type AgentType = 'wolf' | 'elk' | 'bear' | 'beaver' | 'raven' | 'bison' | 'moose' | 'coyote' | 'osprey';
 
 export interface Agent {
   id: number;
@@ -14,7 +14,6 @@ export interface Agent {
   energy: number;
   age: number;
   alive: boolean;
-  // Raven-specific: id of carcass/kill site they're circling
   targetX?: number;
   targetZ?: number;
 }
@@ -25,12 +24,10 @@ export interface SimEvent {
   species: AgentType;
   timestamp: number;
   message: string;
-  // For scavenger attraction
   x?: number;
   z?: number;
 }
 
-// Track recent kill sites for ravens
 export interface KillSite {
   x: number;
   z: number;
@@ -51,13 +48,18 @@ export interface TickResult {
 }
 
 const WORLD_HALF = 90;
-const MAX_SPEED_ELK = 12;
-const MAX_SPEED_WOLF = 14;
-const MAX_SPEED_BEAR = 10;
-const MAX_SPEED_BEAVER = 6;
-const MAX_SPEED_RAVEN = 18;
+const MAX_SPEED: Record<AgentType, number> = {
+  wolf: 14,
+  elk: 12,
+  bear: 10,
+  beaver: 6,
+  raven: 18,
+  bison: 8,
+  moose: 9,
+  coyote: 13,
+  osprey: 20,
+};
 
-// Boids parameters
 const SEPARATION_DIST = 4;
 const ALIGNMENT_DIST = 15;
 const COHESION_DIST = 20;
@@ -169,7 +171,6 @@ function fleeFrom(prey: Agent, predators: Agent[], fleeDist: number): [number, n
   return [fx, fz];
 }
 
-// River line: z = sin(x * 0.03) * 20
 function riverZ(x: number): number {
   return Math.sin(x * 0.03) * 20;
 }
@@ -178,11 +179,10 @@ function riverAttraction(agent: Agent): [number, number] {
   const targetZ = riverZ(agent.x);
   const dz = targetZ - agent.z;
   const dist = Math.abs(dz);
-  if (dist < 5) return [0, 0]; // already near river
+  if (dist < 5) return [0, 0];
   return [0, (dz / dist) * 1.5];
 }
 
-// Ravens circle toward kill sites
 function ravenSeekKillSite(raven: Agent): [number, number] {
   let bestDist = 80;
   let bestX = 0, bestZ = 0;
@@ -199,15 +199,54 @@ function ravenSeekKillSite(raven: Agent): [number, number] {
     }
   }
   if (!found) return [0, 0];
-  // Circle around kill site
   const dx = bestX - raven.x;
   const dz = bestZ - raven.z;
   const dist = Math.sqrt(dx * dx + dz * dz);
   if (dist < 3) {
-    // orbit
     return [-dz * 0.3, dx * 0.3];
   }
   return [(dx / dist) * 2.0, (dz / dist) * 2.0];
+}
+
+// Coyote shadows wolf packs at safe distance, scavenges kill sites
+function coyoteBehavior(coyote: Agent, wolves: Agent[]): [number, number] {
+  // Follow nearest wolf pack at safe distance
+  let closestWolf: Agent | null = null;
+  let minDist = 50;
+  for (const w of wolves) {
+    if (!w.alive) continue;
+    const dx = w.x - coyote.x;
+    const dz = w.z - coyote.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+    if (dist < minDist) {
+      minDist = dist;
+      closestWolf = w;
+    }
+  }
+  
+  // Also attracted to kill sites
+  const [kx, kz] = ravenSeekKillSite(coyote);
+  
+  if (closestWolf) {
+    const dx = closestWolf.x - coyote.x;
+    const dz = closestWolf.z - coyote.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+    if (dist < 12) {
+      // Too close to wolves — flee
+      return [-(dx / dist) * 2.0 + kx, -(dz / dist) * 2.0 + kz];
+    }
+    // Shadow at medium distance
+    return [(dx / dist) * 1.0 + kx, (dz / dist) * 1.0 + kz];
+  }
+  return [kx, kz];
+}
+
+// Osprey: aerial patrol over rivers, dive for fish
+function ospreyBehavior(osprey: Agent): [number, number] {
+  const [rx, rz] = riverAttraction(osprey);
+  // Patrol along river
+  const patrolX = Math.cos(osprey.age * 0.5 + osprey.id) * 1.5;
+  return [rx * 0.5 + patrolX, rz];
 }
 
 export function createAgent(type: AgentType, x?: number, z?: number): Agent {
@@ -215,17 +254,26 @@ export function createAgent(type: AgentType, x?: number, z?: number): Agent {
     wolf: { spread: 30, offX: -30, offZ: -20 },
     elk: { spread: 50, offX: 20, offZ: 10 },
     bear: { spread: 40, offX: 0, offZ: -40 },
-    beaver: { spread: 20, offX: 0, offZ: 0 }, // will snap to river
+    beaver: { spread: 20, offX: 0, offZ: 0 },
     raven: { spread: 60, offX: 0, offZ: 0 },
+    bison: { spread: 40, offX: 30, offZ: -30 },
+    moose: { spread: 30, offX: -20, offZ: 20 },
+    coyote: { spread: 50, offX: -10, offZ: -10 },
+    osprey: { spread: 40, offX: 10, offZ: 0 },
   };
   const c = configs[type];
   const px = x ?? c.offX + (Math.random() - 0.5) * c.spread;
   let pz = z ?? c.offZ + (Math.random() - 0.5) * c.spread;
   
-  // Beavers spawn near river
   if (type === 'beaver' && z === undefined) {
-    const rx = px;
-    pz = riverZ(rx) + (Math.random() - 0.5) * 10;
+    pz = riverZ(px) + (Math.random() - 0.5) * 10;
+  }
+  if (type === 'moose' && z === undefined) {
+    // Moose near riparian areas
+    pz = riverZ(px) + (Math.random() - 0.5) * 20;
+  }
+  if (type === 'osprey' && z === undefined) {
+    pz = riverZ(px) + (Math.random() - 0.5) * 15;
   }
 
   return {
@@ -248,11 +296,14 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
   const bears = agents.filter(a => a.type === 'bear' && a.alive);
   const beavers = agents.filter(a => a.type === 'beaver' && a.alive);
   const ravens = agents.filter(a => a.type === 'raven' && a.alive);
-  const predators = [...wolves, ...bears]; // both are threats to elk
+  const bisons = agents.filter(a => a.type === 'bison' && a.alive);
+  const moose = agents.filter(a => a.type === 'moose' && a.alive);
+  const coyotes = agents.filter(a => a.type === 'coyote' && a.alive);
+  const ospreys = agents.filter(a => a.type === 'osprey' && a.alive);
+  const predators = [...wolves, ...bears]; // threats to elk/moose
   const newBorns: Agent[] = [];
   const events: SimEvent[] = [];
 
-  // Age kill sites
   killSites = killSites.filter(ks => { ks.age += delta; return ks.age < 30; });
 
   for (const agent of agents) {
@@ -267,7 +318,7 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
     let fx = sx + ax + cx + bx;
     let fz = sz + az + cz + bz;
 
-    let maxSpd = MAX_SPEED_ELK;
+    const maxSpd = MAX_SPEED[agent.type];
 
     switch (agent.type) {
       case 'wolf': {
@@ -275,7 +326,6 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
         fx += hx;
         fz += hz;
         agent.energy -= cfg.wolfEnergyDrain * delta;
-        maxSpd = MAX_SPEED_WOLF;
         break;
       }
       case 'elk': {
@@ -283,49 +333,34 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
         fx += flx;
         fz += flz;
         const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
-        if (speed < 3) {
-          agent.energy += cfg.elkGrazeRate * delta;
-        }
+        if (speed < 3) agent.energy += cfg.elkGrazeRate * delta;
         agent.energy -= cfg.elkEnergyDrain * delta;
-        maxSpd = MAX_SPEED_ELK;
         break;
       }
       case 'bear': {
-        // Bears chase elk but slower, also wander
         const [hx, hz] = chaseTarget(agent, elks, cfg.bearChaseDist);
         fx += hx * 0.7;
         fz += hz * 0.7;
-        // Wander force
         fx += (Math.random() - 0.5) * 2;
         fz += (Math.random() - 0.5) * 2;
         agent.energy -= cfg.bearEnergyDrain * delta;
-        // Bears graze slightly when slow (omnivore)
         const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
-        if (speed < 2) {
-          agent.energy += 1.0 * delta;
-        }
-        maxSpd = MAX_SPEED_BEAR;
+        if (speed < 2) agent.energy += 1.0 * delta;
         break;
       }
       case 'beaver': {
-        // Stay near river, slow movement
         const [rx, rz] = riverAttraction(agent);
         fx += rx;
         fz += rz;
-        // Beavers graze/forage
         agent.energy += 1.5 * delta;
         agent.energy -= cfg.beaverEnergyDrain * delta;
-        maxSpd = MAX_SPEED_BEAVER;
         break;
       }
       case 'raven': {
-        // Flock toward kill sites, otherwise wander
         const [rkx, rkz] = ravenSeekKillSite(agent);
         fx += rkx;
         fz += rkz;
-        // Ravens have low energy drain, scavenge at kill sites
         agent.energy -= 0.5 * delta;
-        // Gain energy near kill sites
         for (const ks of killSites) {
           const dx = ks.x - agent.x;
           const dz = ks.z - agent.z;
@@ -334,7 +369,67 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
             break;
           }
         }
-        maxSpd = MAX_SPEED_RAVEN;
+        break;
+      }
+      case 'bison': {
+        // Grazing in open plains, herd defense, flee from wolves
+        const [flx, flz] = fleeFrom(agent, wolves, cfg.bisonFleeDist);
+        fx += flx * 0.6; // Less flighty than elk — herd defense
+        fz += flz * 0.6;
+        fx += (Math.random() - 0.5) * 1.0;
+        fz += (Math.random() - 0.5) * 1.0;
+        const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
+        if (speed < 2) agent.energy += cfg.bisonGrazeRate * delta;
+        agent.energy -= cfg.bisonEnergyDrain * delta;
+        break;
+      }
+      case 'moose': {
+        // Solitary browsing near riparian areas, flee from predators
+        const [flx, flz] = fleeFrom(agent, predators, cfg.mooseFleeDist);
+        fx += flx;
+        fz += flz;
+        // Attracted to river/beaver ponds for aquatic weed foraging
+        const [rx, rz] = riverAttraction(agent);
+        fx += rx * 0.4;
+        fz += rz * 0.4;
+        fx += (Math.random() - 0.5) * 1.5;
+        fz += (Math.random() - 0.5) * 1.5;
+        const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
+        if (speed < 2) agent.energy += cfg.mooseGrazeRate * delta;
+        agent.energy -= cfg.mooseEnergyDrain * delta;
+        break;
+      }
+      case 'coyote': {
+        // Shadow wolves, scavenge kill sites, hunt small prey
+        const [cx2, cz2] = coyoteBehavior(agent, wolves);
+        fx += cx2;
+        fz += cz2;
+        agent.energy -= cfg.coyoteEnergyDrain * delta;
+        // Gain energy near kill sites (scavenging)
+        for (const ks of killSites) {
+          const dx = ks.x - agent.x;
+          const dz = ks.z - agent.z;
+          if (Math.sqrt(dx * dx + dz * dz) < 5) {
+            agent.energy += 3.0 * delta;
+            break;
+          }
+        }
+        // Small passive foraging
+        const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
+        if (speed < 3) agent.energy += 0.5 * delta;
+        break;
+      }
+      case 'osprey': {
+        // Aerial patrol over rivers, dive-fishing
+        const [ox, oz] = ospreyBehavior(agent);
+        fx += ox;
+        fz += oz;
+        agent.energy -= cfg.ospreyEnergyDrain * delta;
+        // Fish near river
+        const riverDist = Math.abs(agent.z - riverZ(agent.x));
+        if (riverDist < 8) {
+          agent.energy += cfg.ospreyFishRate * delta;
+        }
         break;
       }
     }
@@ -361,8 +456,10 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
       events.push(makeEvent('starvation', agent.type, `A ${agent.type} starved`));
     }
 
-    // Max ages
-    const maxAges: Record<AgentType, number> = { wolf: 120, elk: 150, bear: 180, beaver: 100, raven: 80 };
+    const maxAges: Record<AgentType, number> = {
+      wolf: 120, elk: 150, bear: 180, beaver: 100, raven: 80,
+      bison: 200, moose: 160, coyote: 100, osprey: 90,
+    };
     if (agent.age > maxAges[agent.type]) { agent.alive = false; }
   }
 
@@ -384,7 +481,44 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
     }
   }
 
-  // Bear kills elk (less efficient)
+  // Wolf predation on bison (weak — requires pack, less likely)
+  for (const wolf of wolves) {
+    if (!wolf.alive) continue;
+    for (const b of bisons) {
+      if (!b.alive) continue;
+      const dx = wolf.x - b.x;
+      const dz = wolf.z - b.z;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+      // Harder to kill bison — need to be very close and some luck
+      if (dist < cfg.killDist * 0.8 && Math.random() < 0.3) {
+        b.alive = false;
+        wolf.energy = Math.min(100, wolf.energy + cfg.energyPerKill * 1.2);
+        killSites.push({ x: b.x, z: b.z, age: 0 });
+        events.push(makeEvent('kill', 'wolf', 'Wolf pack took down a bison', b.x, b.z));
+        break;
+      }
+    }
+  }
+
+  // Wolf rare predation on moose
+  for (const wolf of wolves) {
+    if (!wolf.alive) continue;
+    for (const m of moose) {
+      if (!m.alive) continue;
+      const dx = wolf.x - m.x;
+      const dz = wolf.z - m.z;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+      if (dist < cfg.killDist && Math.random() < 0.4) {
+        m.alive = false;
+        wolf.energy = Math.min(100, wolf.energy + cfg.energyPerKill);
+        killSites.push({ x: m.x, z: m.z, age: 0 });
+        events.push(makeEvent('kill', 'wolf', 'Wolf hunted a moose', m.x, m.z));
+        break;
+      }
+    }
+  }
+
+  // Bear kills elk
   for (const bear of bears) {
     if (!bear.alive) continue;
     for (const elk of elks) {
@@ -402,7 +536,16 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
     }
   }
 
-  // Beaver dam events (rare)
+  // Coyote small prey hunting (abstract — gains energy occasionally)
+  for (const coyote of coyotes) {
+    if (!coyote.alive) continue;
+    if (Math.random() < 0.002) {
+      coyote.energy = Math.min(100, coyote.energy + 15);
+      events.push(makeEvent('kill', 'coyote', 'Coyote caught small prey', coyote.x, coyote.z));
+    }
+  }
+
+  // Beaver dam events
   for (const beaver of beavers) {
     if (!beaver.alive) continue;
     const nearRiver = Math.abs(beaver.z - riverZ(beaver.x)) < 8;
@@ -411,18 +554,30 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
     }
   }
 
-  // Reproduction helper
+  // Osprey fishing events (visual flavor)
+  for (const osprey of ospreys) {
+    if (!osprey.alive) continue;
+    const riverDist = Math.abs(osprey.z - riverZ(osprey.x));
+    if (riverDist < 8 && Math.random() < 0.001) {
+      events.push(makeEvent('kill', 'osprey', 'Osprey dove and caught a fish', osprey.x, osprey.z));
+    }
+  }
+
+  // Reproduction
+  const birthLabels: Record<AgentType, string> = {
+    wolf: 'Wolf pup born', elk: 'Elk calf born', bear: 'Bear cub born',
+    beaver: 'Beaver kit born', raven: 'Raven chick hatched',
+    bison: 'Bison calf born', moose: 'Moose calf born',
+    coyote: 'Coyote pup born', osprey: 'Osprey chick hatched',
+  };
+
   function tryReproduce(type: AgentType, alive: Agent[], maxPop: number, reproChance: number, energyCost: number) {
     if (alive.length >= 2 && alive.length < maxPop) {
       for (const a of alive) {
         if (a.energy > cfg.reproduceEnergy && Math.random() < reproChance) {
           a.energy -= energyCost;
           newBorns.push(createAgent(type, a.x + (Math.random() - 0.5) * 5, a.z + (Math.random() - 0.5) * 5));
-          const labels: Record<AgentType, string> = {
-            wolf: 'Wolf pup born', elk: 'Elk calf born', bear: 'Bear cub born',
-            beaver: 'Beaver kit born', raven: 'Raven chick hatched',
-          };
-          events.push(makeEvent('birth', type, labels[type]));
+          events.push(makeEvent('birth', type, birthLabels[type]));
           break;
         }
       }
@@ -434,12 +589,20 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
   const aliveBears = agents.filter(a => a.type === 'bear' && a.alive);
   const aliveBeavers = agents.filter(a => a.type === 'beaver' && a.alive);
   const aliveRavens = agents.filter(a => a.type === 'raven' && a.alive);
+  const aliveBisons = agents.filter(a => a.type === 'bison' && a.alive);
+  const aliveMoose = agents.filter(a => a.type === 'moose' && a.alive);
+  const aliveCoyotes = agents.filter(a => a.type === 'coyote' && a.alive);
+  const aliveOspreys = agents.filter(a => a.type === 'osprey' && a.alive);
 
   tryReproduce('wolf', aliveWolves, cfg.wolfMaxPop, cfg.wolfReproChance, 30);
   tryReproduce('elk', aliveElks, cfg.elkMaxPop, cfg.elkReproChance, 25);
   tryReproduce('bear', aliveBears, cfg.bearMaxPop, cfg.bearReproChance, 35);
   tryReproduce('beaver', aliveBeavers, cfg.beaverMaxPop, cfg.beaverReproChance, 20);
   tryReproduce('raven', aliveRavens, cfg.ravenMaxPop, cfg.ravenReproChance, 15);
+  tryReproduce('bison', aliveBisons, cfg.bisonMaxPop, cfg.bisonReproChance, 25);
+  tryReproduce('moose', aliveMoose, cfg.mooseMaxPop, cfg.mooseReproChance, 25);
+  tryReproduce('coyote', aliveCoyotes, cfg.coyoteMaxPop, cfg.coyoteReproChance, 20);
+  tryReproduce('osprey', aliveOspreys, cfg.ospreyMaxPop, cfg.ospreyReproChance, 15);
 
   // Respawn if extinct
   function respawnIfExtinct(type: AgentType, alive: Agent[], count: number) {
@@ -453,6 +616,10 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
   respawnIfExtinct('bear', aliveBears, 3);
   respawnIfExtinct('beaver', aliveBeavers, 4);
   respawnIfExtinct('raven', aliveRavens, 6);
+  respawnIfExtinct('bison', aliveBisons, 8);
+  respawnIfExtinct('moose', aliveMoose, 4);
+  respawnIfExtinct('coyote', aliveCoyotes, 5);
+  respawnIfExtinct('osprey', aliveOspreys, 3);
 
   const result = agents.filter(a => a.alive).concat(newBorns);
   return { agents: result, events };
