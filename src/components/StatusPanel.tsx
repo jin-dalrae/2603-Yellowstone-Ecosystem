@@ -130,19 +130,21 @@ export function StatusPanel() {
 
       <div className="p-4 space-y-4">
         {/* Population counts */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-secondary/40 rounded-lg p-3 text-center">
-            <div className="text-lg font-bold text-foreground">{wolfCount}</div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
-              🐺 Wolves
+        <div className="grid grid-cols-3 gap-1.5">
+          {[
+            { emoji: '🐺', label: 'Wolves', count: wolfCount },
+            { emoji: '🦌', label: 'Elk', count: elkCount },
+            { emoji: '🐻', label: 'Bears', count: bearCount },
+            { emoji: '🦫', label: 'Beavers', count: beaverCount },
+            { emoji: '🐦‍⬛', label: 'Ravens', count: ravenCount },
+          ].map((s) => (
+            <div key={s.label} className="bg-secondary/40 rounded-lg p-2 text-center">
+              <div className="text-sm font-bold text-foreground">{s.count}</div>
+              <div className="text-[9px] text-muted-foreground uppercase tracking-wider">
+                {s.emoji} {s.label}
+              </div>
             </div>
-          </div>
-          <div className="bg-secondary/40 rounded-lg p-3 text-center">
-            <div className="text-lg font-bold text-foreground">{elkCount}</div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
-              🦌 Elk
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Chart */}
