@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { fbm } from '@/lib/noise';
@@ -20,12 +20,21 @@ function getHeight(x: number, z: number) {
   return Math.max(0.5, h);
 }
 
+function mulberry(seed: number) {
+  let a = seed;
+  return () => {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 export function Vegetation() {
   const meshRef = useRef<THREE.InstancedMesh>(null);
-  const colorArrayRef = useRef<Float32Array | null>(null);
 
-  const { positions, baseColors } = useMemo(() => {
-    const positions: { x: number; y: number; z: number; scale: number }[] = [];
+  const { treeData, baseColors } = useMemo(() => {
+    const treeData: { x: number; y: number; z: number; scale: number; rotY: number; scaleY: number }[] = [];
     const baseColors: THREE.Color[] = [];
     const rng = mulberry(123);
 
@@ -33,57 +42,51 @@ export function Vegetation() {
       const x = (rng() - 0.5) * SIZE * 0.9;
       const z = (rng() - 0.5) * SIZE * 0.9;
       const h = getHeight(x, z);
-
-      // Trees grow in forest zone (h: 6-18), not in river
       const riverDist = Math.abs(z - Math.sin(x * 0.03) * 20);
       if (h < 5 || h > 22 || riverDist < 5) continue;
-
-      // Density varies by height
       const density = h > 7 && h < 16 ? 0.7 : 0.3;
       if (rng() > density) continue;
-
-      if (positions.length >= TREE_COUNT) break;
+      if (treeData.length >= TREE_COUNT) break;
 
       const scale = 0.6 + rng() * 1.2;
-      positions.push({ x, y: h, z, scale });
-
-      // Base tree color (will be modulated by season)
+      treeData.push({ x, y: h, z, scale, rotY: rng() * Math.PI * 2, scaleY: 1 + rng() * 0.5 });
       const g = 0.15 + rng() * 0.15;
       baseColors.push(new THREE.Color(0.03, g, 0.02));
     }
-    return { positions, baseColors };
+    return { treeData, baseColors };
   }, []);
 
-  // Set up instance matrices and colors
-  useMemo(() => {
+  const coneGeo = useMemo(() => new THREE.ConeGeometry(1.2, 4, 6), []);
+
+  // Set instance matrices + initial colors after mount
+  useEffect(() => {
     if (!meshRef.current) return;
     const dummy = new THREE.Object3D();
-    const colors = new Float32Array(positions.length * 3);
+    const colorAttr = new Float32Array(treeData.length * 3);
 
-    positions.forEach((p, i) => {
+    treeData.forEach((p, i) => {
       dummy.position.set(p.x, p.y, p.z);
-      dummy.scale.set(p.scale, p.scale * (1 + Math.random() * 0.5), p.scale);
-      dummy.rotation.y = Math.random() * Math.PI * 2;
+      dummy.scale.set(p.scale, p.scale * p.scaleY, p.scale);
+      dummy.rotation.y = p.rotY;
       dummy.updateMatrix();
       meshRef.current!.setMatrixAt(i, dummy.matrix);
 
-      colors[i * 3] = baseColors[i].r;
-      colors[i * 3 + 1] = baseColors[i].g;
-      colors[i * 3 + 2] = baseColors[i].b;
+      colorAttr[i * 3] = baseColors[i].r;
+      colorAttr[i * 3 + 1] = baseColors[i].g;
+      colorAttr[i * 3 + 2] = baseColors[i].b;
     });
 
     meshRef.current.instanceMatrix.needsUpdate = true;
-    colorArrayRef.current = colors;
-  }, [positions, baseColors]);
+    meshRef.current.instanceColor = new THREE.InstancedBufferAttribute(colorAttr, 3);
+  }, [treeData, baseColors]);
 
   // Update colors per season
   useFrame(() => {
-    if (!meshRef.current || !colorArrayRef.current) return;
+    if (!meshRef.current?.instanceColor) return;
     const si = SEASON_INDEX[useSimulationStore.getState().season];
     const colors = meshRef.current.instanceColor;
-    if (!colors) return;
 
-    for (let i = 0; i < positions.length; i++) {
+    for (let i = 0; i < treeData.length; i++) {
       const br = baseColors[i].r;
       const bg = baseColors[i].g;
       const bb = baseColors[i].b;
@@ -91,19 +94,15 @@ export function Vegetation() {
       let r = br, g = bg, b = bb;
 
       if (si < 1) {
-        // spring: vibrant green
         g = bg + 0.1;
       } else if (si < 2) {
-        // summer: deep green
-        r = br; g = bg; b = bb;
+        // summer default
       } else if (si < 3) {
-        // autumn: gold/orange
         const t = si - 2;
         r = br + t * 0.4;
         g = bg + t * 0.1;
         b = bb - t * 0.01;
       } else {
-        // winter: muted/bare
         r = br + 0.2;
         g = bg + 0.05;
         b = bb + 0.1;
@@ -114,26 +113,14 @@ export function Vegetation() {
     colors.needsUpdate = true;
   });
 
-  const coneGeo = useMemo(() => new THREE.ConeGeometry(1.2, 4, 6), []);
-
   return (
     <instancedMesh
       ref={meshRef}
-      args={[coneGeo, undefined, positions.length]}
+      args={[coneGeo, undefined, treeData.length]}
       castShadow
       receiveShadow
     >
       <meshLambertMaterial vertexColors />
     </instancedMesh>
   );
-}
-
-function mulberry(seed: number) {
-  let a = seed;
-  return () => {
-    a |= 0; a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
 }
