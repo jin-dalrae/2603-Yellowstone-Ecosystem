@@ -1,4 +1,4 @@
-import create from 'zustand';
+import { create } from 'zustand';
 
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
 export type CameraMode = 'orbit' | 'god';
