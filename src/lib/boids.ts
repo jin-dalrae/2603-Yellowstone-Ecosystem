@@ -12,6 +12,24 @@ export interface Agent {
   alive: boolean;
 }
 
+export interface SimEvent {
+  id: number;
+  type: 'kill' | 'birth' | 'extinction' | 'respawn' | 'starvation';
+  species: 'wolf' | 'elk';
+  timestamp: number;
+  message: string;
+}
+
+let eventIdCounter = 0;
+function makeEvent(type: SimEvent['type'], species: SimEvent['species'], message: string): SimEvent {
+  return { id: eventIdCounter++, type, species, timestamp: Date.now(), message };
+}
+
+export interface TickResult {
+  agents: Agent[];
+  events: SimEvent[];
+}
+
 const WORLD_HALF = 90; // stay within terrain bounds
 const MAX_SPEED_ELK = 12;
 const MAX_SPEED_WOLF = 14;
