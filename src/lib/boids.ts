@@ -2,9 +2,11 @@
 
 import { useEcoConfigStore } from '@/store/ecoConfigStore';
 
+export type AgentType = 'wolf' | 'elk' | 'bear' | 'beaver' | 'raven';
+
 export interface Agent {
   id: number;
-  type: 'wolf' | 'elk';
+  type: AgentType;
   x: number;
   z: number;
   vx: number;
@@ -12,19 +14,35 @@ export interface Agent {
   energy: number;
   age: number;
   alive: boolean;
+  // Raven-specific: id of carcass/kill site they're circling
+  targetX?: number;
+  targetZ?: number;
 }
 
 export interface SimEvent {
   id: number;
-  type: 'kill' | 'birth' | 'extinction' | 'respawn' | 'starvation';
-  species: 'wolf' | 'elk';
+  type: 'kill' | 'birth' | 'extinction' | 'respawn' | 'starvation' | 'dam_built';
+  species: AgentType;
   timestamp: number;
   message: string;
+  // For scavenger attraction
+  x?: number;
+  z?: number;
 }
 
+// Track recent kill sites for ravens
+export interface KillSite {
+  x: number;
+  z: number;
+  age: number;
+}
+
+let killSites: KillSite[] = [];
+export function getKillSites() { return killSites; }
+
 let eventIdCounter = 0;
-function makeEvent(type: SimEvent['type'], species: SimEvent['species'], message: string): SimEvent {
-  return { id: eventIdCounter++, type, species, timestamp: Date.now(), message };
+function makeEvent(type: SimEvent['type'], species: SimEvent['species'], message: string, x?: number, z?: number): SimEvent {
+  return { id: eventIdCounter++, type, species, timestamp: Date.now(), message, x, z };
 }
 
 export interface TickResult {
@@ -35,6 +53,9 @@ export interface TickResult {
 const WORLD_HALF = 90;
 const MAX_SPEED_ELK = 12;
 const MAX_SPEED_WOLF = 14;
+const MAX_SPEED_BEAR = 10;
+const MAX_SPEED_BEAVER = 6;
+const MAX_SPEED_RAVEN = 18;
 
 // Boids parameters
 const SEPARATION_DIST = 4;
@@ -113,32 +134,32 @@ function cohesion(agent: Agent, neighbors: Agent[]): [number, number] {
   return [(cx - agent.x) * COHESION_WEIGHT, (cz - agent.z) * COHESION_WEIGHT];
 }
 
-function wolfChase(wolf: Agent, elks: Agent[], chaseDist: number): [number, number] {
+function chaseTarget(hunter: Agent, prey: Agent[], chaseDist: number): [number, number] {
   let closest: Agent | null = null;
   let minDist = chaseDist;
-  for (const elk of elks) {
-    if (!elk.alive) continue;
-    const dx = elk.x - wolf.x;
-    const dz = elk.z - wolf.z;
+  for (const p of prey) {
+    if (!p.alive) continue;
+    const dx = p.x - hunter.x;
+    const dz = p.z - hunter.z;
     const dist = Math.sqrt(dx * dx + dz * dz);
     if (dist < minDist) {
       minDist = dist;
-      closest = elk;
+      closest = p;
     }
   }
   if (!closest) return [0, 0];
-  const dx = closest.x - wolf.x;
-  const dz = closest.z - wolf.z;
+  const dx = closest.x - hunter.x;
+  const dz = closest.z - hunter.z;
   const dist = Math.sqrt(dx * dx + dz * dz);
   return [(dx / dist) * HUNT_WEIGHT, (dz / dist) * HUNT_WEIGHT];
 }
 
-function elkFlee(elk: Agent, wolves: Agent[], fleeDist: number): [number, number] {
+function fleeFrom(prey: Agent, predators: Agent[], fleeDist: number): [number, number] {
   let fx = 0, fz = 0;
-  for (const w of wolves) {
+  for (const w of predators) {
     if (!w.alive) continue;
-    const dx = elk.x - w.x;
-    const dz = elk.z - w.z;
+    const dx = prey.x - w.x;
+    const dz = prey.z - w.z;
     const dist = Math.sqrt(dx * dx + dz * dz);
     if (dist < fleeDist && dist > 0) {
       fx += (dx / dist) * FLEE_WEIGHT / (dist * 0.1);
@@ -148,15 +169,70 @@ function elkFlee(elk: Agent, wolves: Agent[], fleeDist: number): [number, number
   return [fx, fz];
 }
 
-export function createAgent(type: 'wolf' | 'elk', x?: number, z?: number): Agent {
-  const spread = type === 'wolf' ? 30 : 50;
-  const offsetX = type === 'wolf' ? -30 : 20;
-  const offsetZ = type === 'wolf' ? -20 : 10;
+// River line: z = sin(x * 0.03) * 20
+function riverZ(x: number): number {
+  return Math.sin(x * 0.03) * 20;
+}
+
+function riverAttraction(agent: Agent): [number, number] {
+  const targetZ = riverZ(agent.x);
+  const dz = targetZ - agent.z;
+  const dist = Math.abs(dz);
+  if (dist < 5) return [0, 0]; // already near river
+  return [0, (dz / dist) * 1.5];
+}
+
+// Ravens circle toward kill sites
+function ravenSeekKillSite(raven: Agent): [number, number] {
+  let bestDist = 80;
+  let bestX = 0, bestZ = 0;
+  let found = false;
+  for (const ks of killSites) {
+    const dx = ks.x - raven.x;
+    const dz = ks.z - raven.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+    if (dist < bestDist) {
+      bestDist = dist;
+      bestX = ks.x;
+      bestZ = ks.z;
+      found = true;
+    }
+  }
+  if (!found) return [0, 0];
+  // Circle around kill site
+  const dx = bestX - raven.x;
+  const dz = bestZ - raven.z;
+  const dist = Math.sqrt(dx * dx + dz * dz);
+  if (dist < 3) {
+    // orbit
+    return [-dz * 0.3, dx * 0.3];
+  }
+  return [(dx / dist) * 2.0, (dz / dist) * 2.0];
+}
+
+export function createAgent(type: AgentType, x?: number, z?: number): Agent {
+  const configs: Record<AgentType, { spread: number; offX: number; offZ: number }> = {
+    wolf: { spread: 30, offX: -30, offZ: -20 },
+    elk: { spread: 50, offX: 20, offZ: 10 },
+    bear: { spread: 40, offX: 0, offZ: -40 },
+    beaver: { spread: 20, offX: 0, offZ: 0 }, // will snap to river
+    raven: { spread: 60, offX: 0, offZ: 0 },
+  };
+  const c = configs[type];
+  const px = x ?? c.offX + (Math.random() - 0.5) * c.spread;
+  let pz = z ?? c.offZ + (Math.random() - 0.5) * c.spread;
+  
+  // Beavers spawn near river
+  if (type === 'beaver' && z === undefined) {
+    const rx = px;
+    pz = riverZ(rx) + (Math.random() - 0.5) * 10;
+  }
+
   return {
     id: nextId++,
     type,
-    x: x ?? offsetX + (Math.random() - 0.5) * spread,
-    z: z ?? offsetZ + (Math.random() - 0.5) * spread,
+    x: px,
+    z: pz,
     vx: (Math.random() - 0.5) * 4,
     vz: (Math.random() - 0.5) * 4,
     energy: 50 + Math.random() * 30,
@@ -169,37 +245,98 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
   const cfg = useEcoConfigStore.getState();
   const wolves = agents.filter(a => a.type === 'wolf' && a.alive);
   const elks = agents.filter(a => a.type === 'elk' && a.alive);
+  const bears = agents.filter(a => a.type === 'bear' && a.alive);
+  const beavers = agents.filter(a => a.type === 'beaver' && a.alive);
+  const ravens = agents.filter(a => a.type === 'raven' && a.alive);
+  const predators = [...wolves, ...bears]; // both are threats to elk
   const newBorns: Agent[] = [];
   const events: SimEvent[] = [];
+
+  // Age kill sites
+  killSites = killSites.filter(ks => { ks.age += delta; return ks.age < 30; });
 
   for (const agent of agents) {
     if (!agent.alive) continue;
 
-    const sameType = agent.type === 'wolf' ? wolves : elks;
-    const neighbors = sameType.filter(a => a.id !== agent.id);
-
-    const [sx, sz] = separation(agent, neighbors);
-    const [ax, az] = alignment(agent, neighbors);
-    const [cx, cz] = cohesion(agent, neighbors);
+    const sameType = agents.filter(a => a.type === agent.type && a.alive && a.id !== agent.id);
+    const [sx, sz] = separation(agent, sameType);
+    const [ax, az] = alignment(agent, sameType);
+    const [cx, cz] = cohesion(agent, sameType);
     const [bx, bz] = boundaryForce(agent.x, agent.z);
 
     let fx = sx + ax + cx + bx;
     let fz = sz + az + cz + bz;
 
-    if (agent.type === 'wolf') {
-      const [hx, hz] = wolfChase(agent, elks, cfg.wolfChaseDist);
-      fx += hx;
-      fz += hz;
-      agent.energy -= cfg.wolfEnergyDrain * delta;
-    } else {
-      const [flx, flz] = elkFlee(agent, wolves, cfg.elkFleeDist);
-      fx += flx;
-      fz += flz;
-      const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
-      if (speed < 3) {
-        agent.energy += cfg.elkGrazeRate * delta;
+    let maxSpd = MAX_SPEED_ELK;
+
+    switch (agent.type) {
+      case 'wolf': {
+        const [hx, hz] = chaseTarget(agent, elks, cfg.wolfChaseDist);
+        fx += hx;
+        fz += hz;
+        agent.energy -= cfg.wolfEnergyDrain * delta;
+        maxSpd = MAX_SPEED_WOLF;
+        break;
       }
-      agent.energy -= cfg.elkEnergyDrain * delta;
+      case 'elk': {
+        const [flx, flz] = fleeFrom(agent, predators, cfg.elkFleeDist);
+        fx += flx;
+        fz += flz;
+        const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
+        if (speed < 3) {
+          agent.energy += cfg.elkGrazeRate * delta;
+        }
+        agent.energy -= cfg.elkEnergyDrain * delta;
+        maxSpd = MAX_SPEED_ELK;
+        break;
+      }
+      case 'bear': {
+        // Bears chase elk but slower, also wander
+        const [hx, hz] = chaseTarget(agent, elks, cfg.bearChaseDist);
+        fx += hx * 0.7;
+        fz += hz * 0.7;
+        // Wander force
+        fx += (Math.random() - 0.5) * 2;
+        fz += (Math.random() - 0.5) * 2;
+        agent.energy -= cfg.bearEnergyDrain * delta;
+        // Bears graze slightly when slow (omnivore)
+        const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
+        if (speed < 2) {
+          agent.energy += 1.0 * delta;
+        }
+        maxSpd = MAX_SPEED_BEAR;
+        break;
+      }
+      case 'beaver': {
+        // Stay near river, slow movement
+        const [rx, rz] = riverAttraction(agent);
+        fx += rx;
+        fz += rz;
+        // Beavers graze/forage
+        agent.energy += 1.5 * delta;
+        agent.energy -= cfg.beaverEnergyDrain * delta;
+        maxSpd = MAX_SPEED_BEAVER;
+        break;
+      }
+      case 'raven': {
+        // Flock toward kill sites, otherwise wander
+        const [rkx, rkz] = ravenSeekKillSite(agent);
+        fx += rkx;
+        fz += rkz;
+        // Ravens have low energy drain, scavenge at kill sites
+        agent.energy -= 0.5 * delta;
+        // Gain energy near kill sites
+        for (const ks of killSites) {
+          const dx = ks.x - agent.x;
+          const dz = ks.z - agent.z;
+          if (Math.sqrt(dx * dx + dz * dz) < 5) {
+            agent.energy += 2.0 * delta;
+            break;
+          }
+        }
+        maxSpd = MAX_SPEED_RAVEN;
+        break;
+      }
     }
 
     fx += (Math.random() - 0.5) * 1.5;
@@ -208,7 +345,6 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
     agent.vx += fx * delta;
     agent.vz += fz * delta;
 
-    const maxSpd = agent.type === 'wolf' ? MAX_SPEED_WOLF : MAX_SPEED_ELK;
     const spd = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
     if (spd > maxSpd) {
       agent.vx = (agent.vx / spd) * maxSpd;
@@ -225,11 +361,12 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
       events.push(makeEvent('starvation', agent.type, `A ${agent.type} starved`));
     }
 
-    if (agent.type === 'wolf' && agent.age > 120) { agent.alive = false; }
-    if (agent.type === 'elk' && agent.age > 150) { agent.alive = false; }
+    // Max ages
+    const maxAges: Record<AgentType, number> = { wolf: 120, elk: 150, bear: 180, beaver: 100, raven: 80 };
+    if (agent.age > maxAges[agent.type]) { agent.alive = false; }
   }
 
-  // Wolf kills
+  // Wolf kills elk
   for (const wolf of wolves) {
     if (!wolf.alive) continue;
     for (const elk of elks) {
@@ -240,47 +377,82 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
       if (dist < cfg.killDist) {
         elk.alive = false;
         wolf.energy = Math.min(100, wolf.energy + cfg.energyPerKill);
-        events.push(makeEvent('kill', 'wolf', 'Wolf hunted an elk'));
+        killSites.push({ x: elk.x, z: elk.z, age: 0 });
+        events.push(makeEvent('kill', 'wolf', 'Wolf hunted an elk', elk.x, elk.z));
         break;
       }
     }
   }
 
-  // Reproduction
+  // Bear kills elk (less efficient)
+  for (const bear of bears) {
+    if (!bear.alive) continue;
+    for (const elk of elks) {
+      if (!elk.alive) continue;
+      const dx = bear.x - elk.x;
+      const dz = bear.z - elk.z;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+      if (dist < cfg.killDist * 1.2) {
+        elk.alive = false;
+        bear.energy = Math.min(100, bear.energy + cfg.energyPerKill * 0.8);
+        killSites.push({ x: elk.x, z: elk.z, age: 0 });
+        events.push(makeEvent('kill', 'bear', 'Bear caught an elk', elk.x, elk.z));
+        break;
+      }
+    }
+  }
+
+  // Beaver dam events (rare)
+  for (const beaver of beavers) {
+    if (!beaver.alive) continue;
+    const nearRiver = Math.abs(beaver.z - riverZ(beaver.x)) < 8;
+    if (nearRiver && Math.random() < 0.0003) {
+      events.push(makeEvent('dam_built', 'beaver', 'Beaver built a dam on the river', beaver.x, beaver.z));
+    }
+  }
+
+  // Reproduction helper
+  function tryReproduce(type: AgentType, alive: Agent[], maxPop: number, reproChance: number, energyCost: number) {
+    if (alive.length >= 2 && alive.length < maxPop) {
+      for (const a of alive) {
+        if (a.energy > cfg.reproduceEnergy && Math.random() < reproChance) {
+          a.energy -= energyCost;
+          newBorns.push(createAgent(type, a.x + (Math.random() - 0.5) * 5, a.z + (Math.random() - 0.5) * 5));
+          const labels: Record<AgentType, string> = {
+            wolf: 'Wolf pup born', elk: 'Elk calf born', bear: 'Bear cub born',
+            beaver: 'Beaver kit born', raven: 'Raven chick hatched',
+          };
+          events.push(makeEvent('birth', type, labels[type]));
+          break;
+        }
+      }
+    }
+  }
+
   const aliveWolves = agents.filter(a => a.type === 'wolf' && a.alive);
   const aliveElks = agents.filter(a => a.type === 'elk' && a.alive);
+  const aliveBears = agents.filter(a => a.type === 'bear' && a.alive);
+  const aliveBeavers = agents.filter(a => a.type === 'beaver' && a.alive);
+  const aliveRavens = agents.filter(a => a.type === 'raven' && a.alive);
 
-  if (aliveWolves.length >= 2 && aliveWolves.length < cfg.wolfMaxPop) {
-    for (const w of aliveWolves) {
-      if (w.energy > cfg.reproduceEnergy && Math.random() < cfg.wolfReproChance) {
-        w.energy -= 30;
-        newBorns.push(createAgent('wolf', w.x + (Math.random() - 0.5) * 5, w.z + (Math.random() - 0.5) * 5));
-        events.push(makeEvent('birth', 'wolf', 'Wolf pup born'));
-        break;
-      }
-    }
-  }
-
-  if (aliveElks.length >= 2 && aliveElks.length < cfg.elkMaxPop) {
-    for (const e of aliveElks) {
-      if (e.energy > cfg.reproduceEnergy && Math.random() < cfg.elkReproChance) {
-        e.energy -= 25;
-        newBorns.push(createAgent('elk', e.x + (Math.random() - 0.5) * 5, e.z + (Math.random() - 0.5) * 5));
-        events.push(makeEvent('birth', 'elk', 'Elk calf born'));
-        break;
-      }
-    }
-  }
+  tryReproduce('wolf', aliveWolves, cfg.wolfMaxPop, cfg.wolfReproChance, 30);
+  tryReproduce('elk', aliveElks, cfg.elkMaxPop, cfg.elkReproChance, 25);
+  tryReproduce('bear', aliveBears, cfg.bearMaxPop, cfg.bearReproChance, 35);
+  tryReproduce('beaver', aliveBeavers, cfg.beaverMaxPop, cfg.beaverReproChance, 20);
+  tryReproduce('raven', aliveRavens, cfg.ravenMaxPop, cfg.ravenReproChance, 15);
 
   // Respawn if extinct
-  if (aliveWolves.length === 0) {
-    for (let i = 0; i < 5; i++) newBorns.push(createAgent('wolf'));
-    events.push(makeEvent('extinction', 'wolf', 'Wolves went extinct — pack respawned'));
+  function respawnIfExtinct(type: AgentType, alive: Agent[], count: number) {
+    if (alive.length === 0) {
+      for (let i = 0; i < count; i++) newBorns.push(createAgent(type));
+      events.push(makeEvent('extinction', type, `${type.charAt(0).toUpperCase() + type.slice(1)}s went extinct — respawned`));
+    }
   }
-  if (aliveElks.length === 0) {
-    for (let i = 0; i < 15; i++) newBorns.push(createAgent('elk'));
-    events.push(makeEvent('extinction', 'elk', 'Elk went extinct — herd respawned'));
-  }
+  respawnIfExtinct('wolf', aliveWolves, 5);
+  respawnIfExtinct('elk', aliveElks, 15);
+  respawnIfExtinct('bear', aliveBears, 3);
+  respawnIfExtinct('beaver', aliveBeavers, 4);
+  respawnIfExtinct('raven', aliveRavens, 6);
 
   const result = agents.filter(a => a.alive).concat(newBorns);
   return { agents: result, events };
