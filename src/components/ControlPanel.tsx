@@ -188,11 +188,40 @@ export function ControlPanel() {
             <div className="h-px bg-border" />
 
             <div>
-              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-3 block">⚙️ Shared</label>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-3 block">🐻 Bear Parameters</label>
               <div className="space-y-3">
-                <SliderRow label="Energy per Kill" value={eco.energyPerKill} min={20} max={100} step={10} onChange={(v) => eco.set({ energyPerKill: v })} />
-                <SliderRow label="Reproduce Energy" value={eco.reproduceEnergy} min={40} max={100} step={5} onChange={(v) => eco.set({ reproduceEnergy: v })} />
-                <SliderRow label="Kill Distance" value={eco.killDist} min={1} max={6} step={0.5} onChange={(v) => eco.set({ killDist: v })} />
+                <SliderRow label="Energy Drain /s" value={eco.bearEnergyDrain} min={0.5} max={5} step={0.5} onChange={(v) => eco.set({ bearEnergyDrain: v })} />
+                <SliderRow label="Chase Distance" value={eco.bearChaseDist} min={10} max={50} step={5} onChange={(v) => eco.set({ bearChaseDist: v })} />
+                <SliderRow label="Repro Chance" value={eco.bearReproChance} min={0.0005} max={0.005} step={0.0005} onChange={(v) => eco.set({ bearReproChance: v })} />
+                <SliderRow label="Max Population" value={eco.bearMaxPop} min={2} max={20} step={1} onChange={(v) => eco.set({ bearMaxPop: v })} />
+              </div>
+            </div>
+
+            <div className="h-px bg-border" />
+
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-3 block">🦫 Beaver Parameters</label>
+              <div className="space-y-3">
+                <SliderRow label="Energy Drain /s" value={eco.beaverEnergyDrain} min={0.2} max={3} step={0.2} onChange={(v) => eco.set({ beaverEnergyDrain: v })} />
+                <SliderRow label="Repro Chance" value={eco.beaverReproChance} min={0.001} max={0.01} step={0.001} onChange={(v) => eco.set({ beaverReproChance: v })} />
+                <SliderRow label="Max Population" value={eco.beaverMaxPop} min={3} max={25} step={1} onChange={(v) => eco.set({ beaverMaxPop: v })} />
+              </div>
+            </div>
+
+            <div className="h-px bg-border" />
+
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-3 block">🐦‍⬛ Raven Parameters</label>
+              <div className="space-y-3">
+                <SliderRow label="Repro Chance" value={eco.ravenReproChance} min={0.001} max={0.01} step={0.001} onChange={(v) => eco.set({ ravenReproChance: v })} />
+                <SliderRow label="Max Population" value={eco.ravenMaxPop} min={5} max={40} step={5} onChange={(v) => eco.set({ ravenMaxPop: v })} />
+              </div>
+            </div>
+
+            <div className="h-px bg-border" />
+
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-3 block">⚙️ Shared</label>
               </div>
             </div>
 
