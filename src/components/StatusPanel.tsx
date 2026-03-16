@@ -99,7 +99,7 @@ function EventFeed({ events }: { events: SimEvent[] }) {
 
 export function StatusPanel() {
   const [collapsed, setCollapsed] = useState(false);
-  const { wolfCount, elkCount, populationHistory, events } = useAgentStore();
+  const { wolfCount, elkCount, bearCount, beaverCount, ravenCount, populationHistory, events } = useAgentStore();
 
   if (collapsed) {
     return (
