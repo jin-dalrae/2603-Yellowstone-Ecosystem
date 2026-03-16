@@ -259,7 +259,8 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
       if (dist < KILL_DIST) {
         elk.alive = false;
         wolf.energy = Math.min(100, wolf.energy + ENERGY_PER_KILL);
-        break; // one kill per tick
+        events.push(makeEvent('kill', 'wolf', 'Wolf hunted an elk'));
+        break;
       }
     }
   }
