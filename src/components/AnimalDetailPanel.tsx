@@ -36,7 +36,7 @@ export function AnimalDetailPanel() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
         <div className="flex items-center gap-2">
-          <span className="text-base">{isWolf ? '🐺' : '🦌'}</span>
+          <span className="text-base">{emoji}</span>
           <span className="text-sm font-semibold text-foreground capitalize">
             {agent.type} #{agent.id}
           </span>

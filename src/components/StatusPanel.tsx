@@ -48,26 +48,27 @@ function PopulationChart({ data }: { data: PopSnapshot[] }) {
             <stop offset="0%" stopColor="hsl(142 50% 45%)" stopOpacity={0.4} />
             <stop offset="100%" stopColor="hsl(142 50% 45%)" stopOpacity={0.05} />
           </linearGradient>
+          <linearGradient id="bearGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="hsl(30 60% 35%)" stopOpacity={0.4} />
+            <stop offset="100%" stopColor="hsl(30 60% 35%)" stopOpacity={0.05} />
+          </linearGradient>
+          <linearGradient id="beaverGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="hsl(25 50% 40%)" stopOpacity={0.4} />
+            <stop offset="100%" stopColor="hsl(25 50% 40%)" stopOpacity={0.05} />
+          </linearGradient>
+          <linearGradient id="ravenGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="hsl(260 30% 30%)" stopOpacity={0.4} />
+            <stop offset="100%" stopColor="hsl(260 30% 30%)" stopOpacity={0.05} />
+          </linearGradient>
         </defs>
         <XAxis dataKey="tick" hide />
         <YAxis tick={{ fontSize: 10 }} width={30} />
         <ChartTooltip content={<ChartTooltipContent />} />
-        <Area
-          type="monotone"
-          dataKey="wolves"
-          stroke="hsl(0 70% 50%)"
-          fill="url(#wolfGrad)"
-          strokeWidth={2}
-          dot={false}
-        />
-        <Area
-          type="monotone"
-          dataKey="elk"
-          stroke="hsl(142 50% 45%)"
-          fill="url(#elkGrad)"
-          strokeWidth={2}
-          dot={false}
-        />
+        <Area type="monotone" dataKey="wolves" stroke="hsl(0 70% 50%)" fill="url(#wolfGrad)" strokeWidth={2} dot={false} />
+        <Area type="monotone" dataKey="elk" stroke="hsl(142 50% 45%)" fill="url(#elkGrad)" strokeWidth={2} dot={false} />
+        <Area type="monotone" dataKey="bears" stroke="hsl(30 60% 35%)" fill="url(#bearGrad)" strokeWidth={1.5} dot={false} />
+        <Area type="monotone" dataKey="beavers" stroke="hsl(25 50% 40%)" fill="url(#beaverGrad)" strokeWidth={1.5} dot={false} />
+        <Area type="monotone" dataKey="ravens" stroke="hsl(260 30% 30%)" fill="url(#ravenGrad)" strokeWidth={1.5} dot={false} />
       </AreaChart>
     </ChartContainer>
   );

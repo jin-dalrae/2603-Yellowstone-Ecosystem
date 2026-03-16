@@ -2,6 +2,7 @@ import { Canvas } from '@react-three/fiber';
 import { Terrain } from './Terrain';
 import { Water } from './Water';
 import { Vegetation } from './Vegetation';
+import { GrassPatches } from './GrassPatches';
 import { Animals } from './Animals';
 import { Atmosphere } from './Atmosphere';
 import { CameraController } from './CameraController';
@@ -30,6 +31,7 @@ export function Scene() {
       <Terrain />
       <Water />
       <Vegetation />
+      <GrassPatches />
       <Animals />
     </Canvas>
   );
