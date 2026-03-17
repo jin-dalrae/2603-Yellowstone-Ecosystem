@@ -10,6 +10,7 @@ import {
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import type { AgentType } from '@/lib/boids';
+import { suppressRespawn } from '@/lib/boids';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -77,12 +78,13 @@ function useScenarioPresets(): ScenarioPreset[] {
       icon: <BookOpen className="w-4 h-4" />,
       description: 'Zero wolves, elevated elk. Introduce 14 wolves and watch the trophic cascade.',
       apply: () => {
+        suppressRespawn('wolf', 5); // prevent auto-respawn for 5 seconds
         resetScenario({ wolf: 0, elk: 60, bear: 4, beaver: 2, raven: 8, bison: 20, moose: 8, coyote: 12, osprey: 4 });
         sim.setDayAndYear(75, 1995); // Spring
         setTimeout(() => {
           useAgentStore.getState().spawnAgents('wolf', 14);
           toast({ title: '🐺 14 wolves introduced to Lamar Valley' });
-        }, 2000);
+        }, 3000);
       },
     },
     {

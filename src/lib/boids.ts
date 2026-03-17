@@ -58,6 +58,15 @@ export function getKillSites() { return killSites; }
 let damSites: DamSite[] = [];
 export function getDamSites() { return damSites; }
 
+// Respawn suppression — prevents auto-respawn for a duration after scenario reset
+let respawnSuppressUntil: Record<string, number> = {};
+export function suppressRespawn(type: AgentType, durationSeconds: number) {
+  respawnSuppressUntil[type] = Date.now() + durationSeconds * 1000;
+}
+function isRespawnSuppressed(type: AgentType): boolean {
+  return (respawnSuppressUntil[type] ?? 0) > Date.now();
+}
+
 let eventIdCounter = 0;
 function makeEvent(type: SimEvent['type'], species: SimEvent['species'], message: string, x?: number, z?: number): SimEvent {
   return { id: eventIdCounter++, type, species, timestamp: Date.now(), message, x, z };
@@ -778,7 +787,7 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
 
   // Respawn if extinct
   function respawnIfExtinct(type: AgentType, alive: Agent[], count: number) {
-    if (alive.length === 0) {
+    if (alive.length === 0 && !isRespawnSuppressed(type)) {
       for (let i = 0; i < count; i++) newBorns.push(createAgent(type));
       events.push(makeEvent('extinction', type, `${type.charAt(0).toUpperCase() + type.slice(1)}s went extinct — respawned`));
     }

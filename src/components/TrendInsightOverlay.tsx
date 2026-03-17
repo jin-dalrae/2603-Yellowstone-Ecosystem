@@ -18,6 +18,7 @@ export function TrendInsightOverlay() {
   const [loading, setLoading] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
   const busyRef = useRef(false);
+  const lastScenarioTickRef = useRef(0);
 
   useEffect(() => {
     const fetchNarration = async () => {
@@ -25,12 +26,17 @@ export function TrendInsightOverlay() {
       const { isPlaying } = useSimulationStore.getState();
       if (!isPlaying) return;
 
-      const { events, wolfCount, elkCount, bearCount, beaverCount, ravenCount, bisonCount, mooseCount, coyoteCount, ospreyCount, treeCount } = useAgentStore.getState();
+      const { events, wolfCount, elkCount, bearCount, beaverCount, ravenCount, bisonCount, mooseCount, coyoteCount, ospreyCount, treeCount, tickCounter } = useAgentStore.getState();
       const { season, year } = useSimulationStore.getState();
+
+      // Detect scenario reset — tickCounter drops back to near 0
+      if (tickCounter < lastScenarioTickRef.current - 10) {
+        setEntries([]); // Clear stale narrations
+      }
+      lastScenarioTickRef.current = tickCounter;
 
       if (events.length === 0) return;
 
-      // Deduplicate events by type — pick most interesting, not 5x "coyote caught small prey"
       const seen = new Set<string>();
       const diverseEvents = events.filter(e => {
         const key = `${e.type}:${e.species}`;
@@ -39,7 +45,6 @@ export function TrendInsightOverlay() {
         return true;
       }).slice(0, 6).map(e => ({ type: e.type, species: e.species, message: e.message }));
 
-      // Cascade state
       const riparianHealth = Math.round(getAverageRiparianHealth() * 100);
       const damCount = getDamSites().length;
 
@@ -84,11 +89,11 @@ export function TrendInsightOverlay() {
       }
     };
 
-    // First narration after 12s, then every 45s to avoid rate limits
+    // First narration after 8s, then every 35s
     const timeout = setTimeout(() => {
       fetchNarration();
-      intervalRef.current = setInterval(fetchNarration, 45_000);
-    }, 12_000);
+      intervalRef.current = setInterval(fetchNarration, 35_000);
+    }, 8_000);
 
     return () => {
       clearTimeout(timeout);
