@@ -62,7 +62,7 @@ export function isInRiparianZone(x: number, z: number): boolean {
  * - Applies beaver dam bonuses
  */
 export function updateRiparianState(
-  elkPositions: { x: number; z: number }[],
+  herbivorePositions: { x: number; z: number; type?: string }[],
   delta: number
 ) {
   const dams = getDamSites();
@@ -73,14 +73,18 @@ export function updateRiparianState(
     zone.damBoost = 0;
   }
 
-  // Count elk in each zone
-  for (const elk of elkPositions) {
-    const rz = riverZ(elk.x);
-    const dist = Math.abs(elk.z - rz);
+  // Count all herbivores in each zone — different species have different impact
+  for (const herb of herbivorePositions) {
+    const rz = riverZ(herb.x);
+    const dist = Math.abs(herb.z - rz);
     if (dist < RIVER_CORRIDOR_WIDTH) {
-      const idx = findZone(elk.x);
+      const idx = findZone(herb.x);
       const proximity = 1 - dist / RIVER_CORRIDOR_WIDTH;
-      zones[idx].grazingPressure += proximity * 0.15;
+      // Bison are heaviest grazers, elk moderate, moose lighter (browse more than graze)
+      let grazingWeight = 0.15;
+      if (herb.type === 'bison') grazingWeight = 0.22;
+      else if (herb.type === 'moose') grazingWeight = 0.10;
+      zones[idx].grazingPressure += proximity * grazingWeight;
     }
   }
 
