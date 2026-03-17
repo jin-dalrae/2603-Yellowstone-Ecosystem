@@ -14,6 +14,7 @@ export interface PopSnapshot {
   moose: number;
   coyotes: number;
   ospreys: number;
+  trees: number;
 }
 
 interface AgentState {
