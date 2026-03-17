@@ -1,73 +1,180 @@
-# Welcome to your Lovable project
+<div align="center">
 
-## Project info
+# 🌲 Yellowstone Living World
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+**A real-time ecosystem world model running entirely in your browser.**
 
-## How can I edit this code?
+*What happens when you remove the apex predator from a 2-million-acre wilderness?*
 
-There are several ways of editing your application.
+</div>
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## The Thesis
 
-Changes made via Lovable will be committed automatically to this repo.
+Every ecology textbook tells the story of Yellowstone's wolf reintroduction. In 1995, 14 wolves were released into a park that had been without them for 70 years. What followed was one of the most dramatic trophic cascades ever documented — wolves changed the behavior of rivers.
 
-**Use your preferred IDE**
+**Yellowstone Living World** is the first browser-native **world model** that lets you *experience* this cascade in real time, intervene in it, and observe what emerges.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## What is a World Model?
 
-Follow these steps:
+A world model is a self-contained simulation that maintains internal state, runs forward in time, and produces **emergent behavior** from simple rules — no scripted outcomes, no predetermined narratives.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Our world model is built on three primitives:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+| Layer | What it does | How it works |
+|-------|-------------|--------------|
+| **Terrain** | Procedural heightmap with 5 biomes, river system, seasonal shaders | Fractal Brownian Motion noise, GPU shaders |
+| **Agents** | 9 species with autonomous behavior: hunt, flee, graze, reproduce, die | Modified Boids algorithm + predator-prey state machines |
+| **Cascade** | Emergent ecosystem effects that no single agent "knows" about | Riparian zone tracking, grazing pressure → tree health → beaver habitat |
 
-# Step 3: Install the necessary dependencies.
-npm i
+The key insight: **nobody programs the cascade**. It *emerges* from the interactions. Wolves don't "know" they're saving the riverbank. Beavers don't "know" the wolves are helping them. The system produces the trophic cascade as an emergent property — exactly like the real Yellowstone.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+---
+
+## The Cascade in Action
+
+```
+🐺 Wolves → reduce 🦌 Elk → less grazing pressure
+→ 🌲 Riverbank trees recover → 🦫 Beavers thrive
+→ Beaver dams built → 💧 Riparian zones expand
+→ More vegetation → More biodiversity → Healthier rivers
+```
+
+**Remove the wolves. Watch it collapse. Add them back. Watch it heal.**
+
+This is not a visualization. This is a *simulation*. Every data point is computed, not illustrated.
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────┐
+│                  React UI Layer                  │
+│  ┌──────────┐ ┌──────────┐ ┌──────────────────┐ │
+│  │ Controls │ │ Status   │ │ Trophic Cascade  │ │
+│  │ Panel    │ │ Panel    │ │ HUD              │ │
+│  └──────────┘ └──────────┘ └──────────────────┘ │
+├─────────────────────────────────────────────────┤
+│              Three.js World Layer                │
+│  Terrain · Water · Vegetation · Animals · Labels │
+│  Low-poly stylized · Instanced rendering         │
+│  Seasonal shaders · Flow-animated river          │
+├─────────────────────────────────────────────────┤
+│              Agent Simulation Layer               │
+│  Boids flocking · Predator-prey FSM              │
+│  Energy model · Reproduction · Mortality          │
+│  Riparian state · Beaver dam tracking             │
+├─────────────────────────────────────────────────┤
+│              AI Narration Layer                   │
+│  LLM-powered David Attenborough commentary       │
+│  Auto-triggered every 25s from live event data   │
+│  Edge function → Gemini Flash                    │
+└─────────────────────────────────────────────────┘
+```
+
+---
+
+## What You Can Do
+
+### 🎮 Intervene
+- **Spawn / cull** any of 9 species with population sliders
+- **Adjust genetic fitness** per species (0.5x – 1.5x survival modifier)
+- **Trigger wildfires** that spread through cellular automata
+- **Set winter severity** (1–10) affecting prey mortality and migration
+- **Toggle human refuge policy** (Open / Limited / Closed)
+
+### 📊 Observe
+- Real-time population area chart with 9-species tracking
+- Event feed: kills, births, starvation, extinctions, beaver dams
+- **Trophic Cascade HUD**: live chain visualization (🐺→🦌→🌲→🦫→💧)
+- Riparian health bars showing grazing pressure vs. tree recovery
+
+### 🎬 Experience
+- Click any animal to inspect: energy, age, speed, position
+- Follow-camera mode locks onto a selected animal
+- AI narration generates poetic commentary from live simulation data
+- 4 scenario presets: Wolf Reintroduction 1995, Severe Winter, Wildfire Summer, Human Withdrawal
+
+---
+
+## Species Roster
+
+| Species | Role | Behavior |
+|---------|------|----------|
+| 🐺 Wolf | Apex predator | Pack hunting, elk pursuit, seasonal aggression |
+| 🦌 Elk | Primary herbivore | Grazing, flee response, riverbank pressure |
+| 🐻 Bear | Omnivore predator | Opportunistic hunting, foraging, solitary |
+| 🦬 Bison | Megaherbivore | Herd movement, geothermal winter refuge |
+| 🫎 Moose | Solitary browser | Riparian feeding, beaver pond dependency |
+| 🦫 Beaver | Ecosystem engineer | River-bound, dam building, riparian recovery |
+| 🐺 Coyote | Mesopredator | Small prey hunting, territorial |
+| 🐦‍⬛ Raven | Scavenger | Kill-site tracking, aerial movement |
+| 🦅 Osprey | Aerial predator | River fishing, high-altitude flight |
+
+---
+
+## Why This Matters
+
+### For Education
+Trophic cascades are taught in every ecology class but never *felt*. This simulator lets a student remove wolves and watch — in 60 seconds — what took Yellowstone 70 years to demonstrate.
+
+### For Research
+The agent-based model provides a sandbox for testing intervention strategies: What population threshold triggers cascade collapse? How does winter severity interact with predation pressure? What's the minimum beaver population for measurable riparian recovery?
+
+### For AI World Models
+This project demonstrates that **meaningful emergent behavior** arises from surprisingly simple rules. No neural network predicts the cascade — it falls out of 9 species following local rules on a shared terrain. This is the foundation of world-model thinking: complex global phenomena from local agent interactions.
+
+---
+
+## Technical Stack
+
+| Component | Technology |
+|-----------|-----------|
+| Framework | React 18 + TypeScript + Vite |
+| 3D Engine | Three.js via React Three Fiber |
+| Rendering | Instanced meshes, custom GLSL shaders |
+| Simulation | Custom boids engine + predator-prey FSM |
+| State | Zustand (3 stores: agents, simulation, eco-config) |
+| AI Narration | Gemini Flash via Edge Functions |
+| Styling | Tailwind CSS + shadcn/ui |
+
+**Zero backend required for simulation.** Everything runs client-side at 60fps. The only server call is optional AI narration.
+
+---
+
+## The Vision
+
+Yellowstone is the proof of concept. The world model architecture generalizes to:
+
+- **Marine ecosystems** — coral reef bleaching cascades
+- **Urban ecology** — green corridor planning
+- **Agricultural systems** — pest-predator balance modeling
+- **Climate scenarios** — biome shift simulation under warming
+- **Game worlds** — living ecosystems for open-world games
+
+The goal: **a general-purpose ecological world model engine** where you define species, rules, and terrain — and the cascades emerge.
+
+---
+
+## Run It
+
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Open `http://localhost:5173`. No API keys needed for the core simulation.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+<div align="center">
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+**Yellowstone Living World** — *Where wolves change rivers.*
 
-## What technologies are used for this project?
+[Live Demo](https://yellowstone-rae.lovable.app) · Built with [Lovable](https://lovable.dev)
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+</div>
