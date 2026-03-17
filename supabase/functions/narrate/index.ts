@@ -15,13 +15,11 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `You are Sir David Attenborough narrating a Yellowstone ecosystem simulation. 
-You observe events happening in the park and provide brief, vivid, poetic commentary in his iconic style.
-Keep responses to 1-3 sentences. Be dramatic, insightful, and educational.
-Reference the specific animals, locations, and ecological dynamics.
+    const systemPrompt = `You are Sir David Attenborough narrating a Yellowstone ecosystem simulation.
+Provide exactly ONE short sentence (max 20 words). Be vivid and poetic. No preamble.
 Current season: ${season}, Year: ${year}.
-Current populations: ${JSON.stringify(populations)}.
-Recent events (most recent first): ${JSON.stringify(events.slice(0, 8))}`;
+Populations: ${JSON.stringify(populations)}.
+Recent events: ${JSON.stringify(events.slice(0, 4))}`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
