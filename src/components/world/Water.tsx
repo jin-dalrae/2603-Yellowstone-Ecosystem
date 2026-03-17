@@ -26,12 +26,12 @@ function createRiverGeometry(): THREE.BufferGeometry {
   const SEGMENTS = 120;
   const positions: number[] = [];
   const uvs: number[] = [];
-  const normals: number[] = []; // store perpendicular direction for width scaling
+  const normals: number[] = [];
   const indices: number[] = [];
 
   for (let i = 0; i <= SEGMENTS; i++) {
     const t = i / SEGMENTS;
-    const x = -95 + t * 190;
+    const x = -110 + t * 220;
     const centerZ = Math.sin(x * 0.03) * 20;
     const h = 1.6;
 
@@ -68,13 +68,11 @@ function createRiverGeometry(): THREE.BufferGeometry {
   const centers = new Float32Array(positions.length);
   for (let i = 0; i <= SEGMENTS; i++) {
     const t = i / SEGMENTS;
-    const x = -95 + t * 190;
+    const x = -110 + t * 220;
     const centerZ = Math.sin(x * 0.03) * 20;
-    // Left vertex center
     centers[i * 6] = x;
     centers[i * 6 + 1] = 1.6;
     centers[i * 6 + 2] = centerZ;
-    // Right vertex center
     centers[i * 6 + 3] = x;
     centers[i * 6 + 4] = 1.6;
     centers[i * 6 + 5] = centerZ;
@@ -242,7 +240,7 @@ function RiverBanks() {
 
       for (let i = 0; i <= SEGMENTS; i++) {
         const t = i / SEGMENTS;
-        const x = -90 + t * 180;
+        const x = -110 + t * 220;
         const centerZ = Math.sin(x * 0.03) * 20;
         const dx = 1;
         const dz = Math.cos(x * 0.03) * 20 * 0.03;

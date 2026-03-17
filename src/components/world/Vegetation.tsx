@@ -7,7 +7,7 @@ import { useSimulationStore, SEASON_INDEX } from '@/store/simulationStore';
 import { useAgentStore } from '@/store/agentStore';
 import { getRiparianTreeHealth } from '@/lib/riparianState';
 
-const TREE_COUNT = 1800;
+const TREE_COUNT = 800;
 const SIZE = 200;
 const MAX_HEIGHT = 28;
 
