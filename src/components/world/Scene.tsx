@@ -34,6 +34,7 @@ export function Scene() {
       <Vegetation />
       <GrassPatches />
       <Animals />
+      <AnimalLabels />
     </Canvas>
   );
 }
