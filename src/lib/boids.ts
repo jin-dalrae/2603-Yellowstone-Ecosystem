@@ -290,8 +290,12 @@ export function createAgent(type: AgentType, x?: number, z?: number): Agent {
   };
 }
 
-export function tickAgents(agents: Agent[], delta: number): TickResult {
+export function tickAgents(agents: Agent[], delta: number, season: Season = 'summer'): TickResult {
   const cfg = useEcoConfigStore.getState();
+  const isWinter = season === 'winter';
+  const isSpring = season === 'spring';
+  const isAutumn = season === 'autumn';
+  const isSummer = season === 'summer';
   const wolves = agents.filter(a => a.type === 'wolf' && a.alive);
   const elks = agents.filter(a => a.type === 'elk' && a.alive);
   const bears = agents.filter(a => a.type === 'bear' && a.alive);
