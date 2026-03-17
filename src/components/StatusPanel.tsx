@@ -10,16 +10,28 @@ import {
 } from '@/components/ui/chart';
 import { Area, AreaChart, XAxis, YAxis } from 'recharts';
 
+const SPECIES_COLORS = {
+  wolves: 'hsl(0 75% 55%)',
+  elk: 'hsl(142 60% 45%)',
+  bears: 'hsl(30 70% 40%)',
+  beavers: 'hsl(180 50% 40%)',
+  ravens: 'hsl(270 50% 55%)',
+  bison: 'hsl(55 70% 45%)',
+  moose: 'hsl(320 50% 50%)',
+  coyotes: 'hsl(90 55% 45%)',
+  ospreys: 'hsl(210 70% 55%)',
+};
+
 const chartConfig: ChartConfig = {
-  wolves: { label: 'Wolves', color: 'hsl(0 70% 50%)' },
-  elk: { label: 'Elk', color: 'hsl(142 50% 45%)' },
-  bears: { label: 'Bears', color: 'hsl(30 60% 35%)' },
-  beavers: { label: 'Beavers', color: 'hsl(25 50% 40%)' },
-  ravens: { label: 'Ravens', color: 'hsl(260 30% 30%)' },
-  bison: { label: 'Bison', color: 'hsl(20 55% 30%)' },
-  moose: { label: 'Moose', color: 'hsl(35 45% 35%)' },
-  coyotes: { label: 'Coyotes', color: 'hsl(45 50% 50%)' },
-  ospreys: { label: 'Osprey', color: 'hsl(210 60% 50%)' },
+  wolves: { label: 'Wolves', color: SPECIES_COLORS.wolves },
+  elk: { label: 'Elk', color: SPECIES_COLORS.elk },
+  bears: { label: 'Bears', color: SPECIES_COLORS.bears },
+  beavers: { label: 'Beavers', color: SPECIES_COLORS.beavers },
+  ravens: { label: 'Ravens', color: SPECIES_COLORS.ravens },
+  bison: { label: 'Bison', color: SPECIES_COLORS.bison },
+  moose: { label: 'Moose', color: SPECIES_COLORS.moose },
+  coyotes: { label: 'Coyotes', color: SPECIES_COLORS.coyotes },
+  ospreys: { label: 'Osprey', color: SPECIES_COLORS.ospreys },
 };
 
 const EVENT_ICONS: Record<SimEvent['type'], React.ReactNode> = {
@@ -40,31 +52,22 @@ function PopulationChart({ data }: { data: PopSnapshot[] }) {
     );
   }
 
-  const gradients = [
-    { id: 'wolfGrad', color: 'hsl(0 70% 50%)' },
-    { id: 'elkGrad', color: 'hsl(142 50% 45%)' },
-    { id: 'bearGrad', color: 'hsl(30 60% 35%)' },
-    { id: 'beaverGrad', color: 'hsl(25 50% 40%)' },
-    { id: 'ravenGrad', color: 'hsl(260 30% 30%)' },
-    { id: 'bisonGrad', color: 'hsl(20 55% 30%)' },
-    { id: 'mooseGrad', color: 'hsl(35 45% 35%)' },
-    { id: 'coyoteGrad', color: 'hsl(45 50% 50%)' },
-    { id: 'ospreyGrad', color: 'hsl(210 60% 50%)' },
-  ];
+  const speciesKeys = Object.keys(SPECIES_COLORS) as (keyof typeof SPECIES_COLORS)[];
 
-  const series = [
-    { key: 'wolves', stroke: 'hsl(0 70% 50%)', fill: 'url(#wolfGrad)', w: 2 },
-    { key: 'elk', stroke: 'hsl(142 50% 45%)', fill: 'url(#elkGrad)', w: 2 },
-    { key: 'bears', stroke: 'hsl(30 60% 35%)', fill: 'url(#bearGrad)', w: 1.5 },
-    { key: 'beavers', stroke: 'hsl(25 50% 40%)', fill: 'url(#beaverGrad)', w: 1.5 },
-    { key: 'ravens', stroke: 'hsl(260 30% 30%)', fill: 'url(#ravenGrad)', w: 1.5 },
-    { key: 'bison', stroke: 'hsl(20 55% 30%)', fill: 'url(#bisonGrad)', w: 1.5 },
-    { key: 'moose', stroke: 'hsl(35 45% 35%)', fill: 'url(#mooseGrad)', w: 1 },
-    { key: 'coyotes', stroke: 'hsl(45 50% 50%)', fill: 'url(#coyoteGrad)', w: 1 },
-    { key: 'ospreys', stroke: 'hsl(210 60% 50%)', fill: 'url(#ospreyGrad)', w: 1 },
-  ];
+  const gradients = speciesKeys.map(key => ({
+    id: `${key}Grad`,
+    color: SPECIES_COLORS[key],
+  }));
+
+  const series = speciesKeys.map(key => ({
+    key,
+    stroke: SPECIES_COLORS[key],
+    fill: `url(#${key}Grad)`,
+    w: ['wolves', 'elk', 'bison'].includes(key) ? 2 : 1.5,
+  }));
 
   return (
+    <>
     <ChartContainer config={chartConfig} className="h-36 w-full">
       <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
         <defs>
@@ -83,6 +86,18 @@ function PopulationChart({ data }: { data: PopSnapshot[] }) {
         ))}
       </AreaChart>
     </ChartContainer>
+    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5 px-1">
+      {speciesKeys.map(key => (
+        <div key={key} className="flex items-center gap-1">
+          <span
+            className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+            style={{ backgroundColor: SPECIES_COLORS[key] }}
+          />
+          <span className="text-[10px] text-muted-foreground capitalize">{chartConfig[key].label}</span>
+        </div>
+      ))}
+    </div>
+  </>
   );
 }
 
