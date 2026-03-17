@@ -32,8 +32,9 @@ function createRiverGeometry(): THREE.BufferGeometry {
   for (let i = 0; i <= SEGMENTS; i++) {
     const t = i / SEGMENTS;
     const x = -110 + t * 220;
-    const centerZ = Math.sin(x * 0.03) * 20;
-    const h = 1.6;
+    const radial = Math.sqrt(x * x + centerZ * centerZ) / (SIZE * 0.5);
+    const bowl = Math.pow(Math.min(radial, 1), 2.2) * 10;
+    const h = 1.6 + bowl;
 
     const dx = 1;
     const dz = Math.cos(x * 0.03) * 20 * 0.03;
