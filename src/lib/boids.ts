@@ -482,8 +482,9 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
           agent.energy -= cfg.ospreyEnergyDrain * delta;
           const riverDist = Math.abs(agent.z - riverZ(agent.x));
           if (riverDist < 8) {
-            // Spring spawning = best fishing
-            const fishMult = isSpring ? 1.5 : 1.0;
+            // Healthier riparian zones = more fish
+            const riverHealth = getAverageRiparianHealth();
+            const fishMult = (isSpring ? 1.5 : 1.0) * (0.5 + riverHealth * 0.8);
             agent.energy += cfg.ospreyFishRate * fishMult * delta;
           }
         }
