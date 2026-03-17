@@ -84,15 +84,26 @@ export function updateRiparianState(
     }
   }
 
-  // Apply dam bonuses
+  // Apply dam bonuses — works for dams near river AND lake
   for (const dam of dams) {
+    // River zone boost
     const idx = findZone(dam.x);
-    // Dams boost nearby zones (±2 zones)
     for (let di = -2; di <= 2; di++) {
       const zi = idx + di;
       if (zi >= 0 && zi < NUM_ZONES) {
         const falloff = 1 - Math.abs(di) * 0.3;
         zones[zi].damBoost = Math.min(1, zones[zi].damBoost + dam.health * falloff * 0.5);
+      }
+    }
+    // Lake-area boost: dams near the lake boost all nearby zones
+    const lakeDist = Math.hypot(dam.x - 25, dam.z - (-15));
+    if (lakeDist < 30) {
+      for (const zone of zones) {
+        const d = Math.hypot(zone.x - dam.x, zone.z - dam.z);
+        if (d < 25) {
+          const falloff = 1 - d / 25;
+          zone.damBoost = Math.min(1, zone.damBoost + dam.health * falloff * 0.4);
+        }
       }
     }
   }
