@@ -104,7 +104,7 @@ const SPECIES_SECTIONS: SpeciesSection[] = [
     ],
   },
   {
-    emoji: '🫎', label: 'Moose',
+    emoji: '🫎', label: 'Moose', type: 'moose' as AgentType,
     sliders: [
       { label: 'Energy Drain /s', key: 'mooseEnergyDrain', min: 0.2, max: 4, step: 0.2 },
       { label: 'Graze Rate /s', key: 'mooseGrazeRate', min: 1, max: 6, step: 0.5 },
