@@ -45,6 +45,7 @@ function SliderRow({ label, value, min, max, step, onChange }: {
 interface SpeciesSection {
   emoji: string;
   label: string;
+  type: AgentType;
   sliders: { label: string; key: string; min: number; max: number; step: number }[];
 }
 
