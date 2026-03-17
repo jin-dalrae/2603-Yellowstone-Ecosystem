@@ -334,6 +334,32 @@ export function ControlPanel() {
               </div>
             </div>
 
+            {/* Save default view */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => {
+                const cam = (window as any).__THREE_CAMERA__;
+                const ctrl = (window as any).__THREE_CONTROLS__;
+                if (cam && ctrl) {
+                  saveDefaultView({
+                    px: Math.round(cam.position.x * 100) / 100,
+                    py: Math.round(cam.position.y * 100) / 100,
+                    pz: Math.round(cam.position.z * 100) / 100,
+                    tx: Math.round(ctrl.target.x * 100) / 100,
+                    ty: Math.round(ctrl.target.y * 100) / 100,
+                    tz: Math.round(ctrl.target.z * 100) / 100,
+                    fov,
+                  });
+                  toast({ title: '📷 View saved as default' });
+                }
+              }}
+            >
+              <Save className="w-3 h-3 mr-2" />
+              Save as Default View
+            </Button>
+
             {/* Narration */}
             <div>
               <Button
