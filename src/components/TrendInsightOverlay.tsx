@@ -16,7 +16,6 @@ let narrationId = 0;
 export function TrendInsightOverlay() {
   const [entries, setEntries] = useState<NarrationEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const [hidden, setHidden] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
   const busyRef = useRef(false);
 
