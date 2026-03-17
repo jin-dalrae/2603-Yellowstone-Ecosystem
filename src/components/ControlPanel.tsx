@@ -122,7 +122,7 @@ const SPECIES_SECTIONS: SpeciesSection[] = [
     ],
   },
   {
-    emoji: '🦅', label: 'Osprey',
+    emoji: '🦅', label: 'Osprey', type: 'osprey' as AgentType,
     sliders: [
       { label: 'Energy Drain /s', key: 'ospreyEnergyDrain', min: 0.2, max: 3, step: 0.2 },
       { label: 'Fish Rate /s', key: 'ospreyFishRate', min: 0.5, max: 5, step: 0.5 },
