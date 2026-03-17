@@ -201,7 +201,7 @@ function PopulationChart({ data }: { data: PopSnapshot[] }) {
   return (
     <>
     <ChartContainer config={chartConfig} className="h-36 w-full">
-      <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+      <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
         <defs>
           {gradients.map(g => (
             <linearGradient key={g.id} id={g.id} x1="0" y1="0" x2="0" y2="1">
@@ -211,7 +211,7 @@ function PopulationChart({ data }: { data: PopSnapshot[] }) {
           ))}
         </defs>
         <XAxis dataKey="tick" hide />
-        <YAxis tick={{ fontSize: 10 }} width={30} />
+        <YAxis tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} width={32} tickLine={false} axisLine={false} />
         <ChartTooltip content={<ChartTooltipContent />} />
         {series.map(s => (
           <Area key={s.key} type="monotone" dataKey={s.key} stroke={s.stroke} fill={s.fill} strokeWidth={s.w} dot={false} />
