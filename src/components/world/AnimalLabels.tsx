@@ -24,9 +24,9 @@ function getTerrainHeight(x: number, z: number): number {
   const riverFactor = Math.max(0, 1 - riverDist / 15);
   h *= 1 - riverFactor * 0.6;
   const edgeDist = Math.max(Math.abs(x), Math.abs(z)) / (SIZE / 2);
-  const edgeFalloff = 1 - Math.pow(Math.max(0, edgeDist - 0.6) / 0.4, 2);
-  h *= edgeFalloff;
-  h = Math.max(0.5, h);
+  const rimStart = 0.5;
+  const rimT = Math.max(0, (edgeDist - rimStart) / (1.0 - rimStart));
+  h = Math.max(0.5, h) + rimT * rimT * 45;
   return h;
 }
 
