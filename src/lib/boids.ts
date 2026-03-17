@@ -446,10 +446,11 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
         if (speed < 3) agent.energy += cfg.elkGrazeRate * grazeReduction * delta;
         const elkDrainMult = isWinter ? 1.5 : 1.0;
         agent.energy -= cfg.elkEnergyDrain * elkDrainMult * delta;
-        // Autumn: rut behavior — males move more erratically
+        // Autumn: rut behavior — erratic Perlin-driven movement
         if (isAutumn) {
-          fx += (Math.random() - 0.5) * 3.0;
-          fz += (Math.random() - 0.5) * 3.0;
+          const [rw1, rw2] = wanderForce(agent, 3.0);
+          fx += rw1;
+          fz += rw2;
         }
         break;
       }
