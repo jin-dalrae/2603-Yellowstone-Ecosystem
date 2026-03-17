@@ -27,6 +27,7 @@ export interface Agent {
   alive: boolean;
   targetX?: number;
   targetZ?: number;
+  killCooldown: number; // time until wolf can kill again
 }
 
 export interface SimEvent {
