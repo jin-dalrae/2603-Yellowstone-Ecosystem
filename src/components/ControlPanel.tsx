@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useSimulationStore, type Season, type CameraMode } from '@/store/simulationStore';
 import { useEcoConfigStore } from '@/store/ecoConfigStore';
-import { Snowflake, Sun, Leaf, Flower2, Eye, Orbit, Play, Pause, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import { useAgentStore } from '@/store/agentStore';
+import { Snowflake, Sun, Leaf, Flower2, Eye, Orbit, Play, Pause, ChevronLeft, ChevronRight, RotateCcw, Plus } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
+import type { AgentType } from '@/lib/boids';
 
 const SEASONS: { key: Season; label: string; icon: React.ReactNode }[] = [
   { key: 'spring', label: 'Spring', icon: <Flower2 className="w-4 h-4" /> },
@@ -43,12 +45,13 @@ function SliderRow({ label, value, min, max, step, onChange }: {
 interface SpeciesSection {
   emoji: string;
   label: string;
+  type: AgentType;
   sliders: { label: string; key: string; min: number; max: number; step: number }[];
 }
 
 const SPECIES_SECTIONS: SpeciesSection[] = [
   {
-    emoji: '🐺', label: 'Wolf',
+    emoji: '🐺', label: 'Wolf', type: 'wolf' as AgentType,
     sliders: [
       { label: 'Energy Drain /s', key: 'wolfEnergyDrain', min: 0.5, max: 8, step: 0.5 },
       { label: 'Chase Distance', key: 'wolfChaseDist', min: 10, max: 60, step: 5 },
@@ -57,7 +60,7 @@ const SPECIES_SECTIONS: SpeciesSection[] = [
     ],
   },
   {
-    emoji: '🦌', label: 'Elk',
+    emoji: '🦌', label: 'Elk', type: 'elk' as AgentType,
     sliders: [
       { label: 'Energy Drain /s', key: 'elkEnergyDrain', min: 0.2, max: 4, step: 0.2 },
       { label: 'Graze Rate /s', key: 'elkGrazeRate', min: 1, max: 8, step: 0.5 },
@@ -67,7 +70,7 @@ const SPECIES_SECTIONS: SpeciesSection[] = [
     ],
   },
   {
-    emoji: '🐻', label: 'Bear',
+    emoji: '🐻', label: 'Bear', type: 'bear' as AgentType,
     sliders: [
       { label: 'Energy Drain /s', key: 'bearEnergyDrain', min: 0.5, max: 5, step: 0.5 },
       { label: 'Chase Distance', key: 'bearChaseDist', min: 10, max: 50, step: 5 },
@@ -76,7 +79,7 @@ const SPECIES_SECTIONS: SpeciesSection[] = [
     ],
   },
   {
-    emoji: '🦫', label: 'Beaver',
+    emoji: '🦫', label: 'Beaver', type: 'beaver' as AgentType,
     sliders: [
       { label: 'Energy Drain /s', key: 'beaverEnergyDrain', min: 0.2, max: 3, step: 0.2 },
       { label: 'Repro Chance', key: 'beaverReproChance', min: 0.001, max: 0.01, step: 0.001 },
@@ -84,14 +87,14 @@ const SPECIES_SECTIONS: SpeciesSection[] = [
     ],
   },
   {
-    emoji: '🐦‍⬛', label: 'Raven',
+    emoji: '🐦‍⬛', label: 'Raven', type: 'raven' as AgentType,
     sliders: [
       { label: 'Repro Chance', key: 'ravenReproChance', min: 0.001, max: 0.01, step: 0.001 },
       { label: 'Max Population', key: 'ravenMaxPop', min: 5, max: 40, step: 5 },
     ],
   },
   {
-    emoji: '🦬', label: 'Bison',
+    emoji: '🦬', label: 'Bison', type: 'bison' as AgentType,
     sliders: [
       { label: 'Energy Drain /s', key: 'bisonEnergyDrain', min: 0.2, max: 3, step: 0.2 },
       { label: 'Graze Rate /s', key: 'bisonGrazeRate', min: 1, max: 8, step: 0.5 },
@@ -101,7 +104,7 @@ const SPECIES_SECTIONS: SpeciesSection[] = [
     ],
   },
   {
-    emoji: '🫎', label: 'Moose',
+    emoji: '🫎', label: 'Moose', type: 'moose' as AgentType,
     sliders: [
       { label: 'Energy Drain /s', key: 'mooseEnergyDrain', min: 0.2, max: 4, step: 0.2 },
       { label: 'Graze Rate /s', key: 'mooseGrazeRate', min: 1, max: 6, step: 0.5 },
@@ -111,7 +114,7 @@ const SPECIES_SECTIONS: SpeciesSection[] = [
     ],
   },
   {
-    emoji: '🐺', label: 'Coyote',
+    emoji: '🐺', label: 'Coyote', type: 'coyote' as AgentType,
     sliders: [
       { label: 'Energy Drain /s', key: 'coyoteEnergyDrain', min: 0.5, max: 5, step: 0.5 },
       { label: 'Repro Chance', key: 'coyoteReproChance', min: 0.001, max: 0.01, step: 0.001 },
@@ -119,7 +122,7 @@ const SPECIES_SECTIONS: SpeciesSection[] = [
     ],
   },
   {
-    emoji: '🦅', label: 'Osprey',
+    emoji: '🦅', label: 'Osprey', type: 'osprey' as AgentType,
     sliders: [
       { label: 'Energy Drain /s', key: 'ospreyEnergyDrain', min: 0.2, max: 3, step: 0.2 },
       { label: 'Fish Rate /s', key: 'ospreyFishRate', min: 0.5, max: 5, step: 0.5 },
@@ -140,6 +143,7 @@ export function ControlPanel() {
   } = useSimulationStore();
 
   const eco = useEcoConfigStore();
+  const spawnAgents = useAgentStore((s) => s.spawnAgents);
 
   if (collapsed) {
     return (
@@ -253,9 +257,20 @@ export function ControlPanel() {
             {SPECIES_SECTIONS.map((section, idx) => (
               <div key={section.label}>
                 {idx > 0 && <div className="h-px bg-border mb-5" />}
-                <label className="text-xs text-muted-foreground uppercase tracking-wider mb-3 block">
-                  {section.emoji} {section.label} Parameters
-                </label>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-xs text-muted-foreground uppercase tracking-wider">
+                    {section.emoji} {section.label}
+                  </label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-6 px-2 text-[10px]"
+                    onClick={() => spawnAgents(section.type, 3)}
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Spawn 3
+                  </Button>
+                </div>
                 <div className="space-y-3">
                   {section.sliders.map((s) => (
                     <SliderRow
