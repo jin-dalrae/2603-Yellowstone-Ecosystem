@@ -380,7 +380,10 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
         const [rx, rz] = riverAttraction(agent);
         fx += rx;
         fz += rz;
-        agent.energy += 1.5 * delta;
+        // Beavers thrive when riparian trees are healthy (food source: bark, branches)
+        const beaverTreeHealth = getRiparianTreeHealth(agent.x, agent.z);
+        const treeBenefit = beaverTreeHealth >= 0 ? beaverTreeHealth : 0.4; // default if not in riparian zone
+        agent.energy += (0.5 + treeBenefit * 1.5) * delta; // 0.5-2.0 energy/s based on tree health
         agent.energy -= cfg.beaverEnergyDrain * delta;
         break;
       }
