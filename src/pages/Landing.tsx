@@ -233,15 +233,6 @@ export default function Landing() {
             </div>
           </motion.div>
 
-          {/* Close-up screenshots */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <motion.div className="rounded-xl overflow-hidden border border-border shadow-xl" {...fadeUp} transition={{ delay: 0.1 }}>
-              <img src={closeup1} alt="Close-up of wildlife agents" className="w-full" loading="lazy" />
-            </motion.div>
-            <motion.div className="rounded-xl overflow-hidden border border-border shadow-xl" {...fadeUp} transition={{ delay: 0.2 }}>
-              <img src={closeup2} alt="Terrain and vegetation detail" className="w-full" loading="lazy" />
-            </motion.div>
-          </div>
         </div>
       </section>
 
