@@ -54,6 +54,7 @@ const EVENT_TYPE_LABELS: Record<SimEvent['type'], string> = {
   extinction: 'Extinctions',
   respawn: 'Respawns',
   dam_built: 'Dams Built',
+  strife: 'Pack Strife',
 };
 
 const SPECIES_LABELS: Record<AgentType, string> = {
