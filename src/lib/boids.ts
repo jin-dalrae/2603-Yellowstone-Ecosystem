@@ -328,9 +328,13 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
     switch (agent.type) {
       case 'wolf': {
         const [hx, hz] = chaseTarget(agent, elks, cfg.wolfChaseDist);
-        fx += hx;
-        fz += hz;
-        agent.energy -= cfg.wolfEnergyDrain * delta;
+        // Winter: increased aggression toward weakened prey
+        const aggressionMult = isWinter ? 1.5 : 1.0;
+        fx += hx * aggressionMult;
+        fz += hz * aggressionMult;
+        // Summer: pup-rearing reduces range (less movement)
+        const drainMult = isSummer ? 0.8 : isWinter ? 1.2 : 1.0;
+        agent.energy -= cfg.wolfEnergyDrain * drainMult * delta;
         break;
       }
       case 'elk': {
@@ -338,8 +342,16 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
         fx += flx;
         fz += flz;
         const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
-        if (speed < 3) agent.energy += cfg.elkGrazeRate * delta;
-        agent.energy -= cfg.elkEnergyDrain * delta;
+        // Winter: grazing is harder, energy drain increases
+        const grazeReduction = isWinter ? 0.4 : 1.0;
+        if (speed < 3) agent.energy += cfg.elkGrazeRate * grazeReduction * delta;
+        const elkDrainMult = isWinter ? 1.5 : 1.0;
+        agent.energy -= cfg.elkEnergyDrain * elkDrainMult * delta;
+        // Autumn: rut behavior — males move more erratically
+        if (isAutumn) {
+          fx += (Math.random() - 0.5) * 3.0;
+          fz += (Math.random() - 0.5) * 3.0;
+        }
         break;
       }
       case 'bear': {
