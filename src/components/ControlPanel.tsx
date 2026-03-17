@@ -87,7 +87,7 @@ const SPECIES_SECTIONS: SpeciesSection[] = [
     ],
   },
   {
-    emoji: '🐦‍⬛', label: 'Raven',
+    emoji: '🐦‍⬛', label: 'Raven', type: 'raven' as AgentType,
     sliders: [
       { label: 'Repro Chance', key: 'ravenReproChance', min: 0.001, max: 0.01, step: 0.001 },
       { label: 'Max Population', key: 'ravenMaxPop', min: 5, max: 40, step: 5 },
