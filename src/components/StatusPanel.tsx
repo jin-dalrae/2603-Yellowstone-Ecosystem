@@ -130,7 +130,7 @@ export function StatusPanel() {
   const {
     wolfCount, elkCount, bearCount, beaverCount, ravenCount,
     bisonCount, mooseCount, coyoteCount, ospreyCount,
-    populationHistory, events,
+    populationHistory, events, narration, narrationLoading,
   } = useAgentStore();
 
   if (collapsed) {
