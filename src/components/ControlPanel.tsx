@@ -134,6 +134,7 @@ export function ControlPanel() {
     isPlaying, togglePlay,
     cameraMode, setCameraMode,
     fov, setFov,
+    saveDefaultView,
     winterSeverity, setWinterSeverity,
     refugePolicy, setRefugePolicy,
     wildfireActive, triggerWildfire, stopWildfire,
