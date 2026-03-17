@@ -29,7 +29,7 @@ for (let i = 0; i < NUM_ZONES; i++) {
     x,
     z,
     grazingPressure: 0,
-    treeHealth: 0.6, // start moderate
+    treeHealth: 0.45, // start just above death threshold — trees are stressed
     damBoost: 0,
   });
 }
