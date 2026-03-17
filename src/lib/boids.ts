@@ -604,11 +604,16 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
     return d.age < 300; // dams last 5 minutes
   });
 
-  // Beaver dam events
+  // Beaver dam events — beavers build dams near the lake (25, -15)
+  const LAKE_X = 25;
+  const LAKE_Z = -15;
+  const LAKE_RADIUS = 14;
   for (const beaver of beavers) {
     if (!beaver.alive) continue;
+    const lakeDist = Math.hypot(beaver.x - LAKE_X, beaver.z - LAKE_Z);
+    const nearLake = lakeDist < LAKE_RADIUS + 12 && lakeDist > LAKE_RADIUS - 2;
     const nearRiver = Math.abs(beaver.z - riverZ(beaver.x)) < 8;
-    if (nearRiver && Math.random() < 0.0003) {
+    if ((nearLake || nearRiver) && Math.random() < 0.0003) {
       // Don't stack dams too close
       const tooClose = damSites.some(d => Math.hypot(d.x - beaver.x, d.z - beaver.z) < 15);
       if (!tooClose) {
