@@ -2,7 +2,7 @@
 
 # 🌲 Yellowstone Living World
 
-**A real-time ecosystem world model running entirely in your browser.**
+**A real-time agent-based ecological simulation running entirely in your browser.**
 
 *What happens when you remove the apex predator from a 2-million-acre wilderness?*
 
@@ -14,23 +14,35 @@
 
 Every ecology textbook tells the story of Yellowstone's wolf reintroduction. In 1995, 14 wolves were released into a park that had been without them for 70 years. What followed was one of the most dramatic trophic cascades ever documented — wolves changed the behavior of rivers.
 
-**Yellowstone Living World** is a browser-native **world model** that lets you *experience* this cascade in real time, intervene in it, and observe what emerges.
+**Yellowstone Living World** is a browser-native **agent-based simulation** that lets you *experience* this cascade in real time, intervene in it, and observe what emerges.
 
 ---
 
-## What is a World Model?
+## How It Works (and What It Is Not)
 
-A world model is a self-contained simulation that maintains internal state, runs forward in time, and produces **emergent behavior** from simple rules — no scripted outcomes, no predetermined narratives.
+This is an **agent-based simulation** (ABS), not a learned world model in the AI/ML sense.
 
-Our world model is built on three primitives:
+The distinction matters:
 
-| Layer | What it does | How it works |
-|-------|-------------|--------------|
-| **Terrain** | Procedural heightmap with 5 biomes, river system, seasonal shaders | Fractal Brownian Motion noise, GPU shaders |
-| **Agents** | 9 species with autonomous behavior: hunt, flee, graze, reproduce, die | Modified Boids algorithm + predator-prey state machines |
-| **Cascade** | Emergent ecosystem effects that no single agent "knows" about | Riparian zone tracking, grazing pressure → tree health → beaver habitat |
+| | This Project | AI World Model (e.g. Dreamer, Sora) |
+|---|---|---|
+| **Rules** | Hand-authored per species | Learned from data |
+| **State prediction** | Computed from rules each tick | Neural network inference |
+| **Emergent behavior** | ✅ Yes — trophic cascade is not programmed | ✅ Yes — but from learned representations |
+| **Counterfactuals** | ✅ Intervene and observe divergence | ✅ Latent-space rollouts |
+| **Data required** | None — rules encode ecological knowledge | Large observational datasets |
 
-The key insight: **nobody programs the cascade**. It *emerges* from the interactions. Wolves don't "know" they're saving the riverbank. Beavers don't "know" the wolves are helping them. The system produces the trophic cascade as an emergent property — exactly like the real Yellowstone.
+### What *does* emerge
+
+The trophic cascade — the chain reaction from wolf predation through to river recovery — is **not scripted**. No agent has a global view. Wolves pursue elk using local proximity rules. Elk graze riverbank vegetation based on energy needs. Beavers build dams near water when conditions allow. The cascade arises as an emergent property of these local interactions, exactly as it did in the real Yellowstone.
+
+### What is coded, not learned
+
+- Predator-prey targeting rules (who hunts whom, at what range)
+- Energy costs, reproduction thresholds, mortality conditions
+- Terrain generation, seasonal cycles, species parameters
+
+The simulation is a **computational thought experiment**: given these rules, does the Yellowstone cascade reproduce? The answer is yes — and that itself is a meaningful result.
 
 ---
 
@@ -45,7 +57,7 @@ The key insight: **nobody programs the cascade**. It *emerges* from the interact
 
 **Remove the wolves. Watch it collapse. Add them back. Watch it heal.**
 
-This is not a visualization. This is a *simulation*. Every data point is computed, not illustrated.
+Every data point is computed from agent interactions, not illustrated.
 
 ---
 
@@ -70,8 +82,8 @@ This is not a visualization. This is a *simulation*. Every data point is compute
 │  Riparian state · Beaver dam tracking             │
 ├─────────────────────────────────────────────────┤
 │              AI Narration Layer                   │
-│  LLM-powered David Attenborough commentary       │
-│  Auto-triggered every 45s from live event data   │
+│  LLM-generated commentary on live sim state      │
+│  Auto-triggered every 45s from event data        │
 │  Edge function → Gemini Flash                    │
 └─────────────────────────────────────────────────┘
 ```
@@ -87,7 +99,7 @@ This is not a visualization. This is a *simulation*. Every data point is compute
 - **Toggle human refuge policy** (Open / Limited / Closed)
 
 ### 📊 Observe
-- Real-time population area chart with 9-species tracking
+- Real-time population area chart tracking 9 species + trees
 - Event feed: kills, births, starvation, extinctions, beaver dams
 - **Trophic Cascade HUD**: live chain visualization (🐺→🦌→🌲→🦫→💧)
 - Riparian health bars showing grazing pressure vs. tree recovery
@@ -95,7 +107,7 @@ This is not a visualization. This is a *simulation*. Every data point is compute
 ### 🎬 Experience
 - Click any animal to inspect: energy, age, speed, position
 - Follow-camera mode locks onto a selected animal
-- AI narration generates poetic commentary from live simulation data
+- AI narration generates commentary from live simulation data
 - 4 scenario presets: Wolf Reintroduction 1995, Severe Winter, Wildfire Summer, Human Withdrawal
 
 ---
@@ -108,11 +120,11 @@ This is not a visualization. This is a *simulation*. Every data point is compute
 | 🦌 Elk | Primary herbivore | Grazing, flee response, riverbank pressure |
 | 🐻 Bear | Omnivore predator | Opportunistic hunting, foraging, solitary |
 | 🦬 Bison | Megaherbivore | Herd movement, geothermal winter refuge |
-| 🫎 Moose | Solitary browser | Riparian feeding, beaver pond dependency |
-| 🦫 Beaver | Ecosystem engineer | River-bound, dam building, riparian recovery |
-| 🐺 Coyote | Mesopredator | Small prey hunting, territorial |
+| 🫎 Moose | Solitary browser | Riparian feeding, water-proximity bias |
+| 🦫 Beaver | Ecosystem engineer | Water-bound, dam building, riparian recovery trigger |
+| 🐺 Coyote | Mesopredator | Wolf-shadow scavenging, kill-site attraction |
 | 🐦‍⬛ Raven | Scavenger | Kill-site tracking, aerial movement |
-| 🦅 Osprey | Aerial predator | River fishing, high-altitude flight |
+| 🦅 Osprey | Aerial fisher | River-proximity fishing, high-altitude flight |
 
 ---
 
@@ -121,11 +133,24 @@ This is not a visualization. This is a *simulation*. Every data point is compute
 ### For Education
 Trophic cascades are taught in every ecology class but never *felt*. This simulator lets a student remove wolves and watch — in 60 seconds — what took Yellowstone 70 years to demonstrate.
 
-### For Research
-The agent-based model provides a sandbox for testing intervention strategies: What population threshold triggers cascade collapse? How does winter severity interact with predation pressure? What's the minimum beaver population for measurable riparian recovery?
+### For Research Intuition
+The agent-based model provides a sandbox for testing intervention strategies: What population threshold triggers cascade collapse? How does winter severity interact with predation pressure? What's the minimum beaver population for measurable riparian recovery? These are not rigorous quantitative answers — they're intuition-building tools.
 
-### For AI World Models
-This project demonstrates that **meaningful emergent behavior** arises from surprisingly simple rules. No neural network predicts the cascade — it falls out of 9 species following local rules on a shared terrain. This is the foundation of world-model thinking: complex global phenomena from local agent interactions.
+### For Exploring Emergence
+This project demonstrates that **meaningful emergent behavior** arises from surprisingly simple local rules. The trophic cascade is not programmed — it falls out of 9 species following proximity-based behaviors on a shared terrain. This is the core idea behind agent-based modeling: complex global phenomena from local interactions.
+
+---
+
+## What Would Make It a True World Model
+
+This is an honest roadmap, not a current capability:
+
+1. **Learn agent rules from data** — train on real Yellowstone telemetry (GPS collar data, population surveys) instead of hand-coding behaviors
+2. **Neural state predictor** — a small model trained on the simulation's own population history to predict future trajectories
+3. **Counterfactual engine** — run parallel simulations with/without interventions, compare divergence statistically
+4. **Uncertainty quantification** — represent parameter uncertainty and propagate it through predictions
+
+The current simulation is the **sandbox** — a working environment where these learned components could be integrated.
 
 ---
 
@@ -147,15 +172,14 @@ This project demonstrates that **meaningful emergent behavior** arises from surp
 
 ## The Vision
 
-Yellowstone is the proof of concept. The world model architecture generalizes to:
+Yellowstone is the proof of concept. The agent-based architecture generalizes to:
 
 - **Marine ecosystems** — coral reef bleaching cascades
 - **Urban ecology** — green corridor planning
 - **Agricultural systems** — pest-predator balance modeling
-- **Climate scenarios** — biome shift simulation under warming
 - **Game worlds** — living ecosystems for open-world games
 
-The goal: **a general-purpose ecological world model engine** where you define species, rules, and terrain — and the cascades emerge.
+The goal: **a general-purpose ecological simulation engine** where you define species, rules, and terrain — and the cascades emerge. Adding learned components would bridge the gap from simulation to true world model.
 
 ---
 
