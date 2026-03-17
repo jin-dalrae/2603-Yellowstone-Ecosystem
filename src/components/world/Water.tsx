@@ -240,7 +240,7 @@ function RiverBanks() {
 
       for (let i = 0; i <= SEGMENTS; i++) {
         const t = i / SEGMENTS;
-        const x = -90 + t * 180;
+        const x = -110 + t * 220;
         const centerZ = Math.sin(x * 0.03) * 20;
         const dx = 1;
         const dz = Math.cos(x * 0.03) * 20 * 0.03;
