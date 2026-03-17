@@ -14,7 +14,7 @@
 
 Every ecology textbook tells the story of Yellowstone's wolf reintroduction. In 1995, 14 wolves were released into a park that had been without them for 70 years. What followed was one of the most dramatic trophic cascades ever documented — wolves changed the behavior of rivers.
 
-**Yellowstone Living World** is the first browser-native **world model** that lets you *experience* this cascade in real time, intervene in it, and observe what emerges.
+**Yellowstone Living World** is a browser-native **world model** that lets you *experience* this cascade in real time, intervene in it, and observe what emerges.
 
 ---
 
@@ -71,7 +71,7 @@ This is not a visualization. This is a *simulation*. Every data point is compute
 ├─────────────────────────────────────────────────┤
 │              AI Narration Layer                   │
 │  LLM-powered David Attenborough commentary       │
-│  Auto-triggered every 25s from live event data   │
+│  Auto-triggered every 45s from live event data   │
 │  Edge function → Gemini Flash                    │
 └─────────────────────────────────────────────────┘
 ```
@@ -82,8 +82,7 @@ This is not a visualization. This is a *simulation*. Every data point is compute
 
 ### 🎮 Intervene
 - **Spawn / cull** any of 9 species with population sliders
-- **Adjust genetic fitness** per species (0.5x – 1.5x survival modifier)
-- **Trigger wildfires** that spread through cellular automata
+- **Trigger wildfires** that displace animals and stress the ecosystem
 - **Set winter severity** (1–10) affecting prey mortality and migration
 - **Toggle human refuge policy** (Open / Limited / Closed)
 
@@ -105,7 +104,7 @@ This is not a visualization. This is a *simulation*. Every data point is compute
 
 | Species | Role | Behavior |
 |---------|------|----------|
-| 🐺 Wolf | Apex predator | Pack hunting, elk pursuit, seasonal aggression |
+| 🐺 Wolf | Apex predator | Elk pursuit, cooperative hunting proximity, seasonal aggression |
 | 🦌 Elk | Primary herbivore | Grazing, flee response, riverbank pressure |
 | 🐻 Bear | Omnivore predator | Opportunistic hunting, foraging, solitary |
 | 🦬 Bison | Megaherbivore | Herd movement, geothermal winter refuge |
