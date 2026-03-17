@@ -96,7 +96,7 @@ export function TrendInsightOverlay() {
   if (entries.length === 0 && !loading) return null;
 
   return (
-    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-1 max-w-2xl w-full pointer-events-none px-4">
+    <div className="absolute top-8 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-1 max-w-2xl w-full pointer-events-none px-4">
       {loading && entries.length === 0 && (
         <p className="text-sm text-white/60 italic animate-pulse drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
           Observing…
@@ -105,8 +105,8 @@ export function TrendInsightOverlay() {
       {entries.map((entry, i) => (
         <p
           key={entry.id}
-          className="text-center text-lg font-medium text-white italic leading-snug animate-in fade-in slide-in-from-bottom-2 duration-500 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]"
-          style={{ opacity: i === 0 ? 1 : 0.4 }}
+          className="text-center text-lg font-medium text-white italic leading-snug animate-in fade-in slide-in-from-top-2 duration-500 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]"
+          style={{ opacity: i === 0 ? 1 : 0.5 }}
         >
           {entry.text}
         </p>
