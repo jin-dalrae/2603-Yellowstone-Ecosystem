@@ -303,7 +303,6 @@ export function createAgent(type: AgentType, x?: number, z?: number): Agent {
 
 export function tickAgents(agents: Agent[], delta: number, season: Season = 'summer'): TickResult {
   const cfg = useEcoConfigStore.getState();
-  const fitness = cfg.geneticFitness;
   const isWinter = season === 'winter';
   const isSpring = season === 'spring';
   const isAutumn = season === 'autumn';
