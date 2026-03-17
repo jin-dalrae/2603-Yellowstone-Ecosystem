@@ -5,17 +5,11 @@ import { useAgentStore } from '@/store/agentStore';
 import { useSimulationStore } from '@/store/simulationStore';
 import { fbm } from '@/lib/noise';
 import type { AgentType } from '@/lib/boids';
+import { ANIMAL_GEO_CREATORS } from './animalGeometries';
 
 const MAX_COUNTS: Record<AgentType, number> = {
-  wolf: 30,
-  elk: 70,
-  bear: 15,
-  beaver: 20,
-  raven: 25,
-  bison: 50,
-  moose: 20,
-  coyote: 25,
-  osprey: 15,
+  wolf: 30, elk: 70, bear: 15, beaver: 20, raven: 25,
+  bison: 50, moose: 20, coyote: 25, osprey: 15,
 };
 
 function getTerrainHeight(x: number, z: number): number {
@@ -32,63 +26,6 @@ function getTerrainHeight(x: number, z: number): number {
   h *= edgeFalloff;
   h = Math.max(0.5, h);
   return h;
-}
-
-// Geometries
-function createWolfGeo(): THREE.BufferGeometry {
-  const geo = new THREE.ConeGeometry(0.5, 1.8, 4);
-  geo.rotateX(Math.PI / 2);
-  geo.translate(0, 0.6, 0);
-  return geo;
-}
-function createElkGeo(): THREE.BufferGeometry {
-  const geo = new THREE.ConeGeometry(0.4, 2.2, 5);
-  geo.rotateX(Math.PI / 2);
-  geo.translate(0, 0.8, 0);
-  return geo;
-}
-function createBearGeo(): THREE.BufferGeometry {
-  const geo = new THREE.SphereGeometry(0.8, 6, 4);
-  geo.scale(1, 0.7, 1.3);
-  geo.translate(0, 0.7, 0);
-  return geo;
-}
-function createBeaverGeo(): THREE.BufferGeometry {
-  const geo = new THREE.BoxGeometry(0.6, 0.4, 1.0);
-  geo.translate(0, 0.4, 0);
-  return geo;
-}
-function createRavenGeo(): THREE.BufferGeometry {
-  const geo = new THREE.OctahedronGeometry(0.3, 0);
-  geo.scale(1.5, 0.5, 1);
-  return geo;
-}
-function createBisonGeo(): THREE.BufferGeometry {
-  // Large bulky shape — wide sphere
-  const geo = new THREE.SphereGeometry(1.0, 6, 4);
-  geo.scale(1.2, 0.8, 1.5);
-  geo.translate(0, 0.8, 0);
-  return geo;
-}
-function createMooseGeo(): THREE.BufferGeometry {
-  // Tall, narrow cone
-  const geo = new THREE.ConeGeometry(0.5, 2.6, 5);
-  geo.rotateX(Math.PI / 2);
-  geo.translate(0, 1.0, 0);
-  return geo;
-}
-function createCoyoteGeo(): THREE.BufferGeometry {
-  // Smaller wolf-like shape
-  const geo = new THREE.ConeGeometry(0.35, 1.4, 4);
-  geo.rotateX(Math.PI / 2);
-  geo.translate(0, 0.5, 0);
-  return geo;
-}
-function createOspreyGeo(): THREE.BufferGeometry {
-  // Winged diamond shape, wider than raven
-  const geo = new THREE.OctahedronGeometry(0.35, 0);
-  geo.scale(2.0, 0.4, 1.2);
-  return geo;
 }
 
 const dummy = new THREE.Object3D();
@@ -191,15 +128,15 @@ function SpeciesMesh({ type, geo }: SpeciesMeshProps) {
 }
 
 export function Animals() {
-  const wolfGeo = useMemo(createWolfGeo, []);
-  const elkGeo = useMemo(createElkGeo, []);
-  const bearGeo = useMemo(createBearGeo, []);
-  const beaverGeo = useMemo(createBeaverGeo, []);
-  const ravenGeo = useMemo(createRavenGeo, []);
-  const bisonGeo = useMemo(createBisonGeo, []);
-  const mooseGeo = useMemo(createMooseGeo, []);
-  const coyoteGeo = useMemo(createCoyoteGeo, []);
-  const ospreyGeo = useMemo(createOspreyGeo, []);
+  const wolfGeo = useMemo(() => ANIMAL_GEO_CREATORS.wolf(), []);
+  const elkGeo = useMemo(() => ANIMAL_GEO_CREATORS.elk(), []);
+  const bearGeo = useMemo(() => ANIMAL_GEO_CREATORS.bear(), []);
+  const beaverGeo = useMemo(() => ANIMAL_GEO_CREATORS.beaver(), []);
+  const ravenGeo = useMemo(() => ANIMAL_GEO_CREATORS.raven(), []);
+  const bisonGeo = useMemo(() => ANIMAL_GEO_CREATORS.bison(), []);
+  const mooseGeo = useMemo(() => ANIMAL_GEO_CREATORS.moose(), []);
+  const coyoteGeo = useMemo(() => ANIMAL_GEO_CREATORS.coyote(), []);
+  const ospreyGeo = useMemo(() => ANIMAL_GEO_CREATORS.osprey(), []);
 
   // Tick agent simulation
   useFrame((_, delta) => {
