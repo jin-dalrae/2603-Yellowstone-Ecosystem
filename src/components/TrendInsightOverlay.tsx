@@ -68,10 +68,13 @@ export function TrendInsightOverlay() {
         if (error) {
           console.warn('Narration error:', error);
         } else if (data?.narration) {
-          setEntries(prev => [
-            { id: narrationId++, text: data.narration, timestamp: Date.now() },
-            ...prev,
-          ].slice(0, 2));
+          const cleanText = data.narration.replace(/\n/g, ' ').trim();
+          if (cleanText) {
+            setEntries(prev => [
+              { id: narrationId++, text: cleanText, timestamp: Date.now() },
+              ...prev,
+            ].slice(0, 2));
+          }
         }
       } catch (err) {
         console.warn('Narration fetch failed:', err);
