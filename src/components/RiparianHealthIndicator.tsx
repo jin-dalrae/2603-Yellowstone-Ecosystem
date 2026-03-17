@@ -32,7 +32,7 @@ export function RiparianHealthIndicator() {
     'bg-destructive';
 
   return (
-    <div className="absolute bottom-4 right-4 z-40 bg-card/80 backdrop-blur-xl border border-border rounded-lg px-3.5 py-2.5 shadow-lg w-56">
+    <div className="absolute bottom-4 left-4 z-40 bg-card/80 backdrop-blur-xl border border-border rounded-lg px-3.5 py-2.5 shadow-lg w-56">
       <div className="flex items-center gap-2 mb-2">
         <TreePine className="w-4 h-4 text-primary" />
         <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
