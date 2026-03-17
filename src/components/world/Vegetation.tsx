@@ -136,18 +136,19 @@ export function Vegetation() {
       const riverDist = Math.abs(z - Math.sin(x * 0.03) * 20);
       const lakeDist = Math.sqrt((x - 25) ** 2 + (z + 15) ** 2);
 
-      // Allow trees closer to river now (riparian corridor)
-      if (h < 3 || h > 22) continue;
+      // Allow trees on flat areas near water, just not submerged
+      if (h < 1.8 || h > 22) continue;
       if (riverDist < 4) continue; // still not in water
       if (lakeDist < 15) continue; // not in lake
 
       const isRiparian = riverDist < 20;
       const isLakeshore = lakeDist < 25;
 
-      // Higher density near water bodies
-      let density = h > 7 && h < 16 ? 0.7 : 0.3;
-      if (isRiparian) density = Math.max(density, 0.65);
-      if (isLakeshore) density = Math.max(density, 0.7);
+      // Higher density near water bodies and in flat riparian areas
+      let density = h > 7 && h < 16 ? 0.7 : 0.35;
+      if (isRiparian) density = Math.max(density, 0.7);
+      if (isLakeshore) density = Math.max(density, 0.75);
+      if (h < 5 && (isRiparian || isLakeshore)) density = Math.max(density, 0.8); // flat areas near water get lots of trees
 
       if (rng() > density) continue;
 
