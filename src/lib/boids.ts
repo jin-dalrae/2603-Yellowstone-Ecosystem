@@ -292,6 +292,7 @@ export function createAgent(type: AgentType, x?: number, z?: number): Agent {
 
 export function tickAgents(agents: Agent[], delta: number, season: Season = 'summer'): TickResult {
   const cfg = useEcoConfigStore.getState();
+  const fitness = cfg.geneticFitness;
   const isWinter = season === 'winter';
   const isSpring = season === 'spring';
   const isAutumn = season === 'autumn';
@@ -489,7 +490,14 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
     agent.x = clampToWorld(agent.x + agent.vx * delta);
     agent.z = clampToWorld(agent.z + agent.vz * delta);
     agent.age += delta;
-    agent.energy = Math.min(100, agent.energy);
+    
+    // Apply genetic fitness: low fitness = faster energy drain, reduced max energy
+    const fit = fitness[agent.type] ?? 1.0;
+    // Fitness inversely affects energy drain (applied as post-multiplier)
+    if (fit < 1.0) {
+      agent.energy -= (1.0 - fit) * 2.0 * delta; // extra drain for low fitness
+    }
+    agent.energy = Math.min(100 * fit, agent.energy);
 
     if (agent.energy <= 0) {
       agent.alive = false;
@@ -500,7 +508,8 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
       wolf: 120, elk: 150, bear: 180, beaver: 100, raven: 80,
       bison: 200, moose: 160, coyote: 100, osprey: 90,
     };
-    if (agent.age > maxAges[agent.type]) { agent.alive = false; }
+    // Fitness affects lifespan
+    if (agent.age > maxAges[agent.type] * fit) { agent.alive = false; }
   }
 
   // Wolf kills elk
