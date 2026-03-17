@@ -402,7 +402,7 @@ export function createAgent(type: AgentType, x?: number, z?: number): Agent {
   };
 }
 
-export function tickAgents(agents: Agent[], delta: number, season: Season = 'summer'): TickResult {
+export function tickAgents(agents: Agent[], delta: number, season: Season = 'summer', year: number = 1): TickResult {
   const cfg = useEcoConfigStore.getState();
   const isWinter = season === 'winter';
   const isSpring = season === 'spring';
