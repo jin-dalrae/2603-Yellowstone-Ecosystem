@@ -100,22 +100,43 @@ export function TrendInsightOverlay() {
 
   if (entries.length === 0 && !loading) return null;
 
+  if (hidden) {
+    return (
+      <button
+        onClick={() => setHidden(false)}
+        className="absolute top-4 left-1/2 -translate-x-1/2 z-40 bg-card/60 backdrop-blur-md border border-border rounded-full p-1.5 hover:bg-card/90 transition-colors"
+        aria-label="Show narration"
+      >
+        <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
+      </button>
+    );
+  }
+
   return (
-    <div className="absolute top-8 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-1 max-w-xl w-full pointer-events-none px-4">
-      {loading && entries.length === 0 && (
-        <p className="w-full overflow-hidden text-ellipsis whitespace-nowrap text-center text-sm text-white/60 italic animate-pulse drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-          Observing…
-        </p>
-      )}
-      {entries.map((entry, i) => (
-        <p
-          key={entry.id}
-          className="w-full overflow-hidden text-ellipsis whitespace-nowrap text-center text-lg font-medium text-white italic leading-snug animate-in fade-in slide-in-from-top-2 duration-500 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]"
-          style={{ opacity: i === 0 ? 1 : 0.5 }}
-        >
-          {entry.text}
-        </p>
-      ))}
+    <div className="absolute top-8 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-1 max-w-xl w-full px-4">
+      <button
+        onClick={() => setHidden(true)}
+        className="pointer-events-auto absolute -top-1 right-4 bg-card/50 backdrop-blur-md border border-border rounded-full p-1 hover:bg-card/90 transition-colors"
+        aria-label="Hide narration"
+      >
+        <X className="w-3 h-3 text-muted-foreground" />
+      </button>
+      <div className="pointer-events-none w-full flex flex-col items-center gap-1">
+        {loading && entries.length === 0 && (
+          <p className="w-full overflow-hidden text-ellipsis whitespace-nowrap text-center text-sm text-white/60 italic animate-pulse drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+            Observing…
+          </p>
+        )}
+        {entries.map((entry, i) => (
+          <p
+            key={entry.id}
+            className="w-full overflow-hidden text-ellipsis whitespace-nowrap text-center text-lg font-medium text-white italic leading-snug animate-in fade-in slide-in-from-top-2 duration-500 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]"
+            style={{ opacity: i === 0 ? 1 : 0.5 }}
+          >
+            {entry.text}
+          </p>
+        ))}
+      </div>
     </div>
   );
 }
