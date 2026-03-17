@@ -128,8 +128,10 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       tickCounter: 0,
       selectedAgentId: null,
       narration: '',
+      extinctSpecies: null,
     });
   },
+  clearExtinction: () => set({ extinctSpecies: null }),
   setNarration: (narration) => set({ narration }),
   setNarrationLoading: (narrationLoading) => set({ narrationLoading }),
   tickAgents: (delta: number, season?: Season) => {
