@@ -42,14 +42,16 @@ export function TrendInsightOverlay() {
           },
         });
 
-        if (!error && data?.narration) {
+        if (error) {
+          console.warn('Narration error:', error);
+        } else if (data?.narration) {
           setEntries(prev => [
             { id: narrationId++, text: data.narration, timestamp: Date.now() },
             ...prev,
           ].slice(0, 2));
         }
-      } catch {
-        // silently skip
+      } catch (err) {
+        console.warn('Narration fetch failed:', err);
       } finally {
         setLoading(false);
       }
