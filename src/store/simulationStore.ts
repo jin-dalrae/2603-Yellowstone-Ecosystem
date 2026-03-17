@@ -67,6 +67,16 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   setCameraMode: (cameraMode) => set({ cameraMode }),
   fov: 60,
   setFov: (fov) => set({ fov }),
+  savedCameraView: (() => {
+    try {
+      const s = localStorage.getItem('ys_default_camera');
+      return s ? JSON.parse(s) : null;
+    } catch { return null; }
+  })(),
+  saveDefaultView: (view) => {
+    localStorage.setItem('ys_default_camera', JSON.stringify(view));
+    set({ savedCameraView: view, fov: view.fov });
+  },
   winterSeverity: 5,
   setWinterSeverity: (winterSeverity) => set({ winterSeverity }),
   refugePolicy: 'open',
