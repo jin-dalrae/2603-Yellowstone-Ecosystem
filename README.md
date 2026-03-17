@@ -194,10 +194,12 @@ Yellowstone is the proof of concept. The agent-based architecture generalizes:
 | Phase | Status | Description |
 |-------|--------|-------------|
 | Agent-based simulation | ✅ Shipped | 9 species, emergent trophic cascade, seasonal dynamics |
+| NPS report calibration | ✅ Shipped | Kill rates, prey preference, intraspecific strife from 1995–2005 Wolf Project Reports |
 | AI narration | ✅ Shipped | LLM commentary from live simulation state |
 | Scenario presets | ✅ Shipped | Wolf Reintroduction 1995, Severe Winter, Wildfire, Human Withdrawal |
-| Pack hunting & herding | ✅ Shipped | Flanking wolves, defensive bison clusters |
-| Learn rules from data | 🔜 Next | Train on real Yellowstone GPS collar data + population surveys |
+| Pack hunting & herding | ✅ Shipped | Flanking wolves, defensive bison clusters, pack territorial strife |
+| Disease outbreaks | 🔜 Next | Periodic pup survival crashes matching 2005 NPS data (60% → 16%) |
+| Learn rules from data | 🔜 Planned | Train on real Yellowstone GPS collar data + population surveys |
 | Neural state predictor | 🔜 Planned | Predict population trajectories from current state |
 | Multi-ecosystem support | 🔜 Planned | Marine, urban, agricultural templates |
 | Counterfactual engine | 🔜 Planned | Parallel rollouts comparing intervention scenarios |
