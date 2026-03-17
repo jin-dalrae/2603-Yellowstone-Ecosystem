@@ -304,7 +304,7 @@ export function BeaverDams() {
       {/* Recovery rings */}
       <instancedMesh ref={ringMeshRef} args={[undefined, undefined, MAX_DAMS]}>
         <ringGeometry args={[0.85, 1, 32]} />
-        <meshBasicMaterial vertexColors transparent opacity={0.35} side={THREE.DoubleSide} />
+        <meshBasicMaterial vertexColors transparent opacity={0.15} side={THREE.DoubleSide} />
       </instancedMesh>
 
       {/* Muddy shore around ponds */}

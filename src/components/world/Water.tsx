@@ -236,7 +236,7 @@ export function Water() {
 function RiverBanks() {
   const geo = useMemo(() => {
     const SEGMENTS = 80;
-    const BANK_WIDTH = 2.5;
+    const BANK_WIDTH = 1.8;
     const RIVER_WIDTH = 5;
     const positions: number[] = [];
     const colors: number[] = [];
@@ -257,19 +257,21 @@ function RiverBanks() {
         const nx = -dz / len;
         const nz = dx / len;
 
-        // Inner edge (river side) — follow terrain
+        // Inner edge (river side) — sit just above water
         const ix = x + nx * RIVER_WIDTH * sign;
         const iz = centerZ + nz * RIVER_WIDTH * sign;
         const innerH = getHeight(ix, iz);
-        positions.push(ix, Math.max(1.0, innerH - 0.3), iz);
-        colors.push(0.35, 0.28, 0.18);
+        positions.push(ix, Math.max(0.8, innerH - 0.4), iz);
+        // Muddy brown, blending toward green
+        colors.push(0.28, 0.22, 0.14);
 
-        // Outer edge
+        // Outer edge — blend into terrain height
         const ox = x + nx * (RIVER_WIDTH + BANK_WIDTH) * sign;
         const oz = centerZ + nz * (RIVER_WIDTH + BANK_WIDTH) * sign;
-        const h = getHeight(ox, oz);
-        positions.push(ox, Math.max(1.0, h * 0.5 + 0.8), oz);
-        colors.push(0.3, 0.32, 0.15);
+        const outerH = getHeight(ox, oz);
+        positions.push(ox, Math.max(0.8, outerH - 0.1), oz);
+        // Greener to blend with grass
+        colors.push(0.22, 0.28, 0.12);
 
         if (i < SEGMENTS) {
           const base = offset + i * 2;
