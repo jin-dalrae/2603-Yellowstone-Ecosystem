@@ -72,21 +72,21 @@ export function TrendInsightOverlay() {
   if (entries.length === 0 && !loading) return null;
 
   return (
-    <div className="absolute bottom-20 left-4 z-40 flex flex-col gap-2 max-w-md pointer-events-none">
+    <div className="absolute bottom-4 left-4 z-40 flex flex-col gap-1.5 max-w-xs pointer-events-none">
       {loading && entries.length === 0 && (
-        <div className="flex items-start gap-2.5 bg-card/80 backdrop-blur-xl border border-border rounded-lg px-3.5 py-2.5 shadow-lg">
-          <Mic className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5 animate-pulse" />
-          <p className="text-xs text-muted-foreground italic">Observing the ecosystem…</p>
+        <div className="flex items-center gap-2 bg-card/70 backdrop-blur-md border border-border rounded-md px-3 py-1.5 shadow-md">
+          <Mic className="w-3 h-3 text-primary shrink-0 animate-pulse" />
+          <p className="text-[11px] text-muted-foreground italic truncate">Observing…</p>
         </div>
       )}
       {entries.map((entry, i) => (
         <div
           key={entry.id}
-          className="flex items-start gap-2.5 bg-card/80 backdrop-blur-xl border border-border rounded-lg px-3.5 py-2.5 shadow-lg animate-in slide-in-from-left-4 fade-in duration-500"
-          style={{ opacity: i === 0 ? 1 : 0.55 }}
+          className="flex items-center gap-2 bg-card/70 backdrop-blur-md border border-border rounded-md px-3 py-1.5 shadow-md animate-in slide-in-from-left-2 fade-in duration-300"
+          style={{ opacity: i === 0 ? 1 : 0.5 }}
         >
-          <Mic className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-          <p className="text-xs text-foreground leading-relaxed italic">{entry.text}</p>
+          <Mic className="w-3 h-3 text-primary shrink-0" />
+          <p className="text-[11px] text-foreground italic line-clamp-2">{entry.text}</p>
         </div>
       ))}
     </div>
