@@ -159,15 +159,10 @@ export function Terrain() {
       const riverFactor = Math.max(0, 1 - riverDist / 15);
       h *= 1 - riverFactor * 0.6;
 
-      // Edge falloff replaced with concave bowl — edges curve UP
-      const edgeDist = Math.max(Math.abs(x), Math.abs(z)) / (SIZE / 2);
-      // Inner area (0–0.5): normal terrain
-      // Transition (0.5–0.7): blend
-      // Outer ring (0.7–1.0): rise steeply upward like a bowl rim
-      const rimStart = 0.5;
-      const rimT = Math.max(0, (edgeDist - rimStart) / (1.0 - rimStart)); // 0 at rimStart, 1 at edge
-      const rimHeight = rimT * rimT * 45; // quadratic rise, up to 45 units
-      h = Math.max(0.5, h) + rimHeight;
+      // Gentle concave bowl to lift the horizon without creating an awkward rim
+      const radial = Math.sqrt(x * x + z * z) / (SIZE * 0.5);
+      const bowl = Math.pow(Math.min(radial, 1), 2.2) * 10;
+      h = Math.max(0.5, h) + bowl;
 
       pos.setY(i, h);
     }
