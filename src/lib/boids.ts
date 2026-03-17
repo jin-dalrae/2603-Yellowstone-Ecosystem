@@ -2,6 +2,7 @@
 
 import { useEcoConfigStore } from '@/store/ecoConfigStore';
 import type { Season } from '@/store/simulationStore';
+import { updateRiparianState } from '@/lib/riparianState';
 
 export type AgentType = 'wolf' | 'elk' | 'bear' | 'beaver' | 'raven' | 'bison' | 'moose' | 'coyote' | 'osprey';
 
