@@ -3,6 +3,7 @@ import { ControlPanel } from '@/components/ControlPanel';
 import { StatusOverlay } from '@/components/StatusOverlay';
 import { StatusPanel } from '@/components/StatusPanel';
 import { AnimalDetailPanel } from '@/components/AnimalDetailPanel';
+import { TrendInsightOverlay } from '@/components/TrendInsightOverlay';
 
 const Index = () => {
   return (
@@ -12,6 +13,7 @@ const Index = () => {
       <StatusPanel />
       <StatusOverlay />
       <AnimalDetailPanel />
+      <TrendInsightOverlay />
     </div>
   );
 };
