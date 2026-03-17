@@ -133,6 +133,7 @@ export function ControlPanel() {
     timeSpeed, setTimeSpeed,
     isPlaying, togglePlay,
     cameraMode, setCameraMode,
+    fov, setFov,
     winterSeverity, setWinterSeverity,
     refugePolicy, setRefugePolicy,
     wildfireActive, triggerWildfire, stopWildfire,
