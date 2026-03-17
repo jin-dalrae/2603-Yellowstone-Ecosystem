@@ -1,6 +1,7 @@
 // Boids flocking algorithm + predator-prey rules engine
 
 import { useEcoConfigStore } from '@/store/ecoConfigStore';
+import type { Season } from '@/store/simulationStore';
 
 export type AgentType = 'wolf' | 'elk' | 'bear' | 'beaver' | 'raven' | 'bison' | 'moose' | 'coyote' | 'osprey';
 
