@@ -27,11 +27,12 @@ export interface Agent {
   alive: boolean;
   targetX?: number;
   targetZ?: number;
+  killCooldown: number; // time until wolf can kill again
 }
 
 export interface SimEvent {
   id: number;
-  type: 'kill' | 'birth' | 'extinction' | 'respawn' | 'starvation' | 'dam_built';
+  type: 'kill' | 'birth' | 'extinction' | 'respawn' | 'starvation' | 'dam_built' | 'strife';
   species: AgentType;
   timestamp: number;
   message: string;
@@ -397,10 +398,11 @@ export function createAgent(type: AgentType, x?: number, z?: number): Agent {
     energy: 50 + Math.random() * 30,
     age: 0,
     alive: true,
+    killCooldown: 0,
   };
 }
 
-export function tickAgents(agents: Agent[], delta: number, season: Season = 'summer'): TickResult {
+export function tickAgents(agents: Agent[], delta: number, season: Season = 'summer', year: number = 1): TickResult {
   const cfg = useEcoConfigStore.getState();
   const isWinter = season === 'winter';
   const isSpring = season === 'spring';
@@ -628,57 +630,89 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
     if (agent.age > maxAges[agent.type]) { agent.alive = false; }
   }
 
-  // Wolf kills elk
+  // Decrement kill cooldowns
   for (const wolf of wolves) {
     if (!wolf.alive) continue;
-    for (const elk of elks) {
-      if (!elk.alive) continue;
-      const dx = wolf.x - elk.x;
-      const dz = wolf.z - elk.z;
+    if (wolf.killCooldown > 0) wolf.killCooldown -= delta;
+  }
+
+  // NPS-accurate wolf predation: ~1 elk per 2-3 days per pack
+  // Prey preference: 86% elk, 9% bison (year 5+), 5% moose
+  // Kill cooldown prevents rapid successive kills
+  const WOLF_KILL_COOLDOWN = 0.3; // ~2.4 sim-days at 1x speed (0.3 age-seconds * 8 days/s)
+  
+  for (const wolf of wolves) {
+    if (!wolf.alive || wolf.killCooldown > 0) continue;
+    
+    // Determine prey preference based on NPS data
+    const roll = Math.random();
+    let targetPrey: Agent[] = [];
+    let preyLabel = '';
+    let energyMult = 1.0;
+    
+    if (roll < 0.86) {
+      // 86% elk — primary prey
+      targetPrey = elks;
+      preyLabel = 'elk';
+    } else if (roll < 0.95 && year >= 5) {
+      // 9% bison — only after year 5 when interior packs specialize
+      targetPrey = bisons;
+      preyLabel = 'bison';
+      energyMult = 1.2; // bigger prey = more energy
+    } else {
+      // 5% moose (or bison slot pre-year-5 becomes moose)
+      targetPrey = moose;
+      preyLabel = 'moose';
+    }
+    
+    for (const prey of targetPrey) {
+      if (!prey.alive) continue;
+      const dx = wolf.x - prey.x;
+      const dz = wolf.z - prey.z;
       const dist = Math.sqrt(dx * dx + dz * dz);
-      if (dist < cfg.killDist * (isWinter ? 1.4 : 1.0)) {
-        elk.alive = false;
-        wolf.energy = Math.min(100, wolf.energy + cfg.energyPerKill);
-        killSites.push({ x: elk.x, z: elk.z, age: 0 });
-        events.push(makeEvent('kill', 'wolf', 'Wolf hunted an elk', elk.x, elk.z));
+      
+      // Bison are harder to kill — need pack and luck
+      let killChance = 1.0;
+      if (preyLabel === 'bison') killChance = 0.25;
+      else if (preyLabel === 'moose') killChance = 0.35;
+      
+      // NPS: wolves preferentially target calves (30%) and elderly (49%)
+      // Simulate by making kills slightly easier on low-energy prey
+      if (prey.energy < 30) killChance *= 1.5;
+      
+      const effectiveKillDist = cfg.killDist * (isWinter ? 1.4 : 1.0);
+      if (dist < effectiveKillDist && Math.random() < killChance) {
+        prey.alive = false;
+        wolf.energy = Math.min(100, wolf.energy + cfg.energyPerKill * energyMult);
+        wolf.killCooldown = WOLF_KILL_COOLDOWN;
+        killSites.push({ x: prey.x, z: prey.z, age: 0 });
+        events.push(makeEvent('kill', 'wolf', `Wolf hunted a ${preyLabel}`, prey.x, prey.z));
         break;
       }
     }
   }
 
-  // Wolf predation on bison (weak — requires pack, less likely)
-  for (const wolf of wolves) {
-    if (!wolf.alive) continue;
-    for (const b of bisons) {
-      if (!b.alive) continue;
-      const dx = wolf.x - b.x;
-      const dz = wolf.z - b.z;
-      const dist = Math.sqrt(dx * dx + dz * dz);
-      // Harder to kill bison — need to be very close and some luck
-      if (dist < cfg.killDist * 0.8 && Math.random() < 0.3) {
-        b.alive = false;
-        wolf.energy = Math.min(100, wolf.energy + cfg.energyPerKill * 1.2);
-        killSites.push({ x: b.x, z: b.z, age: 0 });
-        events.push(makeEvent('kill', 'wolf', 'Wolf pack took down a bison', b.x, b.z));
-        break;
+  // Wolf intraspecific strife — #1 cause of wolf mortality by 2005 (NPS data)
+  // When wolf density is high, territorial aggression kills dispersing wolves
+  if (wolves.length >= 6) {
+    for (const wolf of wolves) {
+      if (!wolf.alive) continue;
+      // Count nearby wolves (proxy for territorial overlap)
+      let nearbyCount = 0;
+      for (const other of wolves) {
+        if (other.id === wolf.id || !other.alive) continue;
+        const dx = wolf.x - other.x;
+        const dz = wolf.z - other.z;
+        if (Math.sqrt(dx * dx + dz * dz) < 20) nearbyCount++;
       }
-    }
-  }
-
-  // Wolf rare predation on moose
-  for (const wolf of wolves) {
-    if (!wolf.alive) continue;
-    for (const m of moose) {
-      if (!m.alive) continue;
-      const dx = wolf.x - m.x;
-      const dz = wolf.z - m.z;
-      const dist = Math.sqrt(dx * dx + dz * dz);
-      if (dist < cfg.killDist && Math.random() < 0.4) {
-        m.alive = false;
-        wolf.energy = Math.min(100, wolf.energy + cfg.energyPerKill);
-        killSites.push({ x: m.x, z: m.z, age: 0 });
-        events.push(makeEvent('kill', 'wolf', 'Wolf hunted a moose', m.x, m.z));
-        break;
+      // Low-energy wolves in crowded areas die from strife
+      // Probability scales with crowding and inversely with energy
+      if (nearbyCount >= 4 && wolf.energy < 50) {
+        const strifeChance = 0.0008 * (nearbyCount - 3) * (1 - wolf.energy / 100);
+        if (Math.random() < strifeChance) {
+          wolf.alive = false;
+          events.push(makeEvent('strife', 'wolf', 'Wolf killed in pack territorial dispute', wolf.x, wolf.z));
+        }
       }
     }
   }
