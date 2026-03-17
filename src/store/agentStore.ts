@@ -27,6 +27,8 @@ interface AgentState {
   mooseCount: number;
   coyoteCount: number;
   ospreyCount: number;
+  treeCount: number;
+  setTreeCount: (n: number) => void;
   events: SimEvent[];
   populationHistory: PopSnapshot[];
   tickCounter: number;
