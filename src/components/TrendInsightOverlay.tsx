@@ -93,5 +93,4 @@ export function TrendInsightOverlay() {
       ))}
     </div>
   );
-
-
+}
