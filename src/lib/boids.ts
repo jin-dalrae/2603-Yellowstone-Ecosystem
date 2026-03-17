@@ -415,15 +415,18 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
         const [flx, flz] = fleeFrom(agent, predators, cfg.mooseFleeDist);
         fx += flx;
         fz += flz;
-        // Attracted to river/beaver ponds for aquatic weed foraging
+        // Summer: relies on beaver pond sodium sources — stronger river attraction
         const [rx, rz] = riverAttraction(agent);
-        fx += rx * 0.4;
-        fz += rz * 0.4;
+        const riverMult = isSummer ? 0.8 : isSpring ? 0.6 : 0.3;
+        fx += rx * riverMult;
+        fz += rz * riverMult;
         fx += (Math.random() - 0.5) * 1.5;
         fz += (Math.random() - 0.5) * 1.5;
         const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
-        if (speed < 2) agent.energy += cfg.mooseGrazeRate * delta;
-        agent.energy -= cfg.mooseEnergyDrain * delta;
+        // Winter: bark browsing — reduced graze rate
+        const mooseGrazeMult = isWinter ? 0.5 : 1.0;
+        if (speed < 2) agent.energy += cfg.mooseGrazeRate * mooseGrazeMult * delta;
+        agent.energy -= cfg.mooseEnergyDrain * (isWinter ? 1.3 : 1.0) * delta;
         break;
       }
       case 'coyote': {
