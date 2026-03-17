@@ -220,14 +220,14 @@ export function BeaverDams() {
         dummy.updateMatrix();
         damMeshRef.current!.setMatrixAt(i, dummy.matrix);
 
-        // ── Recovery ring ──
-        const ringScale = 6 + d.health * 26;
-        dummy.position.set(d.x, baseY + 0.2, d.z);
+        // ── Recovery ring — subtle, small indicator ──
+        const ringScale = 3 + d.health * 5;
+        dummy.position.set(d.x, baseY + 0.12, d.z);
         dummy.rotation.set(-Math.PI / 2, 0, 0);
         dummy.scale.set(ringScale, ringScale, 1);
         dummy.updateMatrix();
         ringMeshRef.current!.setMatrixAt(i, dummy.matrix);
-        ringColor.setHSL(0.33, 0.5 + d.health * 0.4, 0.2 + d.health * 0.3);
+        ringColor.setHSL(0.33, 0.3 + d.health * 0.3, 0.25 + d.health * 0.2);
         ringMeshRef.current!.setColorAt(i, ringColor);
 
         // ── Pond behind dam ──
