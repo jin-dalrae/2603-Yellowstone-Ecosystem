@@ -174,6 +174,13 @@ export function Vegetation() {
     return { treeGroups: groups, baseScales: allBaseScales };
   }, []);
 
+  const totalTrees = treeGroups[0].length + treeGroups[1].length + treeGroups[2].length;
+
+  // Report tree count to store once
+  useEffect(() => {
+    useAgentStore.getState().setTreeCount(totalTrees);
+  }, [totalTrees]);
+
   const initialized = useRef(false);
 
   useFrame(() => {

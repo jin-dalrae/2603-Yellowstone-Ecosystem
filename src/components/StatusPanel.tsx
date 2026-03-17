@@ -287,6 +287,7 @@ export function StatusPanel() {
     { emoji: '🫎', label: 'Moose', count: mooseCount },
     { emoji: '🐺', label: 'Coyotes', count: coyoteCount },
     { emoji: '🦅', label: 'Osprey', count: ospreyCount },
+    { emoji: '🌲', label: 'Trees', count: treeCount },
   ];
 
   return (
