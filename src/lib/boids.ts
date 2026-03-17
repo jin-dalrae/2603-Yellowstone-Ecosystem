@@ -450,15 +450,25 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
         break;
       }
       case 'osprey': {
-        // Aerial patrol over rivers, dive-fishing
-        const [ox, oz] = ospreyBehavior(agent);
-        fx += ox;
-        fz += oz;
-        agent.energy -= cfg.ospreyEnergyDrain * delta;
-        // Fish near river
-        const riverDist = Math.abs(agent.z - riverZ(agent.x));
-        if (riverDist < 8) {
-          agent.energy += cfg.ospreyFishRate * delta;
+        // Active only spring/summer during spawning runs — per PRD
+        if (isWinter || isAutumn) {
+          // Dormant: minimal movement, low energy drain (roosting)
+          agent.energy -= cfg.ospreyEnergyDrain * 0.3 * delta;
+          // Slow drift
+          fx += (Math.random() - 0.5) * 0.5;
+          fz += (Math.random() - 0.5) * 0.5;
+        } else {
+          // Spring/summer: active aerial fishing
+          const [ox, oz] = ospreyBehavior(agent);
+          fx += ox;
+          fz += oz;
+          agent.energy -= cfg.ospreyEnergyDrain * delta;
+          const riverDist = Math.abs(agent.z - riverZ(agent.x));
+          if (riverDist < 8) {
+            // Spring spawning = best fishing
+            const fishMult = isSpring ? 1.5 : 1.0;
+            agent.energy += cfg.ospreyFishRate * fishMult * delta;
+          }
         }
         break;
       }
