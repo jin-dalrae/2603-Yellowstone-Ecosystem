@@ -39,6 +39,12 @@ export function CameraController() {
     }
   }, [fov, camera]);
 
+  // Expose camera for debugging
+  useEffect(() => {
+    (window as any).__THREE_CAMERA__ = camera;
+    if (controlsRef.current) (window as any).__THREE_CONTROLS__ = controlsRef.current;
+  });
+
   useEffect(() => {
     if (cameraMode === 'god') {
       camera.position.set(0, 120, 0.1);
