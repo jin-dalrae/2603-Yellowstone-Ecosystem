@@ -247,10 +247,9 @@ export function BeaverDams() {
 
           // Only show reeds when health is decent
           if (d.health > 0.3) {
-            const reedScale = 0.4 + d.health * 0.6;
-            // Slight sway
+            const reedScale = (0.5 + d.health * 0.7) * 1.8;
             const sway = Math.sin(pondMat.uniforms.uTime.value * 1.2 + r * 1.5 + d.x) * 0.08;
-            dummy.position.set(rx, 1.6, rz);
+            dummy.position.set(rx, (d.y ?? 2.0) + 0.1, rz);
             dummy.rotation.set(sway, angle + Math.PI * 0.5, 0);
             dummy.scale.setScalar(reedScale);
           } else {
