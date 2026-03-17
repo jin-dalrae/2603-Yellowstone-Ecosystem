@@ -193,6 +193,22 @@ export function StatusPanel() {
           <PopulationChart data={populationHistory} />
         </div>
 
+        {/* Narration */}
+        {(narration || narrationLoading) && (
+          <div>
+            <label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block">
+              🎙️ Narration
+            </label>
+            <div className="bg-secondary/40 rounded-lg p-3 text-xs text-foreground leading-relaxed italic">
+              {narrationLoading ? (
+                <span className="text-muted-foreground animate-pulse">Sir David is observing…</span>
+              ) : (
+                narration
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Event feed */}
         <div>
           <label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block">
