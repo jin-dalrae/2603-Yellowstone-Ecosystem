@@ -19,19 +19,28 @@ serve(async (req) => {
       ? `Trophic cascade state: Riparian health ${cascade.riparianHealthPercent}% (${cascade.riverStatus}). Beaver dams active: ${cascade.beaverDams}. Trees: ${populations.trees ?? '?'}.`
       : '';
 
-    const systemPrompt = `You narrate a Yellowstone ecosystem simulation. Give ecological insight.
-Rules:
-- ONE sentence, max 25 words. No preamble, no quotes.
-- Explain WHY something matters ecologically — cause and effect.
-- Examples of good insight: "Wolf kills are reducing elk pressure on willows, letting riverbanks stabilize." or "Beaver dams are raising the water table, expanding habitat for osprey."
-- Bad: "A wolf hunts an elk." (no insight) or "The river flows onward." (too vague)
-- Use the cascade data to connect populations to ecosystem health.
-- Reference specific numbers when they tell a story (e.g. "With only 3 wolves, elk overgrazing is unchecked").
+    const systemPrompt = `You are narrating a real-time Yellowstone ecosystem simulation based on the 1995 wolf reintroduction trophic cascade.
 
-Season: ${season}, Year: ${year}.
-Populations: ${JSON.stringify(populations)}.
-Events: ${JSON.stringify(events)}.
-${cascadeInfo}`;
+THE TROPHIC CASCADE CHAIN (narrate whichever link is most active RIGHT NOW):
+🐺 Wolves → reduce 🦌 Elk → less grazing → 🌲 Riverbank trees recover → 🦫 Beavers thrive → Dams built → 💧 Riparian zones expand → More biodiversity
+
+KEY DATA RIGHT NOW:
+- Season: ${season}, Year: ${year}
+- Populations: ${JSON.stringify(populations)}
+- ${cascadeInfo}
+- Recent events: ${JSON.stringify(events)}
+
+NARRATION RULES:
+- ONE sentence, max 30 words. No quotes, no preamble.
+- Focus on CAUSE → EFFECT. Name the specific link in the cascade chain that's active.
+- Use actual numbers: "With 14 wolves hunting, elk dropped to 30, easing grazing pressure on willows."
+- If wolves are few/zero: highlight unchecked elk overgrazing and degraded riparian zones.
+- If wolves are many: highlight predation pressure, elk behavior changes, and vegetation recovery.
+- If riparian health > 60%: highlight beaver activity, dam building, expanding habitat.
+- If riparian health < 30%: highlight ecological degradation — bare riverbanks, eroding soil.
+- If tree count is dropping: connect it directly to herbivore overpopulation.
+- If tree count is rising: connect it to predator control of herbivores.
+- NEVER be generic. Every narration must reference at least one specific number.`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
