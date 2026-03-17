@@ -2,6 +2,7 @@
 
 import { useEcoConfigStore } from '@/store/ecoConfigStore';
 import type { Season } from '@/store/simulationStore';
+import { updateRiparianState } from '@/lib/riparianState';
 
 export type AgentType = 'wolf' | 'elk' | 'bear' | 'beaver' | 'raven' | 'bison' | 'moose' | 'coyote' | 'osprey';
 
@@ -691,6 +692,10 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
   respawnIfExtinct('moose', aliveMoose, 4);
   respawnIfExtinct('coyote', aliveCoyotes, 5);
   respawnIfExtinct('osprey', aliveOspreys, 3);
+
+  // Update riparian state — elk grazing pressure vs tree recovery
+  const elkPositions = agents.filter(a => a.type === 'elk' && a.alive).map(a => ({ x: a.x, z: a.z }));
+  updateRiparianState(elkPositions, delta);
 
   const result = agents.filter(a => a.alive).concat(newBorns);
   return { agents: result, events };
