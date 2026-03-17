@@ -184,6 +184,9 @@ export function Water() {
 
       {/* Riverbanks — subtle shoreline strips */}
       <RiverBanks />
+
+      {/* Lake bank ring */}
+      <LakeBank position={[25, 0, -15]} radius={14} />
     </>
   );
 }
@@ -241,6 +244,55 @@ function RiverBanks() {
     g.computeVertexNormals();
     return g;
   }, []);
+
+  return (
+    <mesh geometry={geo}>
+      <meshLambertMaterial vertexColors side={THREE.DoubleSide} />
+    </mesh>
+  );
+}
+
+/** Sandy/muddy ring around the lake */
+function LakeBank({ position, radius }: { position: [number, number, number]; radius: number }) {
+  const geo = useMemo(() => {
+    const SEGS = 48;
+    const BANK_WIDTH = 3;
+    const positions: number[] = [];
+    const colors: number[] = [];
+    const indices: number[] = [];
+
+    for (let i = 0; i <= SEGS; i++) {
+      const angle = (i / SEGS) * Math.PI * 2;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+
+      // Inner edge (lake shore)
+      const ix = position[0] + cos * radius;
+      const iz = position[2] + sin * radius;
+      positions.push(ix, 1.95, iz);
+      colors.push(0.35, 0.28, 0.18);
+
+      // Outer edge
+      const ox = position[0] + cos * (radius + BANK_WIDTH);
+      const oz = position[2] + sin * (radius + BANK_WIDTH);
+      const h = getHeight(ox, oz);
+      positions.push(ox, Math.max(1.8, h * 0.3 + 1.4), oz);
+      colors.push(0.3, 0.32, 0.15);
+
+      if (i < SEGS) {
+        const base = i * 2;
+        indices.push(base, base + 1, base + 2);
+        indices.push(base + 1, base + 3, base + 2);
+      }
+    }
+
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    g.setIndex(indices);
+    g.computeVertexNormals();
+    return g;
+  }, [position, radius]);
 
   return (
     <mesh geometry={geo}>
