@@ -85,6 +85,18 @@ function PopulationChart({ data }: { data: PopSnapshot[] }) {
         ))}
       </AreaChart>
     </ChartContainer>
+    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5 px-1">
+      {speciesKeys.map(key => (
+        <div key={key} className="flex items-center gap-1">
+          <span
+            className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+            style={{ backgroundColor: SPECIES_COLORS[key] }}
+          />
+          <span className="text-[10px] text-muted-foreground capitalize">{chartConfig[key].label}</span>
+        </div>
+      ))}
+    </div>
+  </>
   );
 }
 
