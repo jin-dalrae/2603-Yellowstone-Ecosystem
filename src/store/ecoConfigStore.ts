@@ -74,9 +74,9 @@ const DEFAULT_FITNESS: Record<AgentType, number> = {
 };
 
 const DEFAULTS = {
-  wolfEnergyDrain: 1.8,
+  wolfEnergyDrain: 1.2,
   wolfChaseDist: 35,
-  wolfReproChance: 0.003,
+  wolfReproChance: 0.005,
   wolfMaxPop: 30,
 
   elkEnergyDrain: 0.8,

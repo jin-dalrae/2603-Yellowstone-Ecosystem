@@ -484,6 +484,18 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
         fz += hz * aggressionMult;
         const drainMult = isSummer ? 0.8 : isWinter ? 1.2 : 1.0;
         agent.energy -= cfg.wolfEnergyDrain * drainMult * delta;
+        // Passive foraging: wolves scavenge small prey, carrion between hunts
+        const wolfSpeed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
+        if (wolfSpeed < 4) agent.energy += 0.6 * delta; // resting/patrolling = opportunistic feeding
+        // Scavenge from kill sites
+        for (const ks of killSites) {
+          const kdx = ks.x - agent.x;
+          const kdz = ks.z - agent.z;
+          if (Math.sqrt(kdx * kdx + kdz * kdz) < 6) {
+            agent.energy += 1.5 * delta;
+            break;
+          }
+        }
         break;
       }
       case 'elk': {
