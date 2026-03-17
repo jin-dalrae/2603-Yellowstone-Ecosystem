@@ -1,13 +1,95 @@
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { getDamSites } from '@/lib/boids';
 import { getAverageRiparianHealth } from '@/lib/riparianState';
 
 const MAX_DAMS = 10;
+const REEDS_PER_DAM = 6;
 const dummy = new THREE.Object3D();
 
-/** Pond shader — similar to river water but circular and calmer */
+// ── Elaborate dam geometry: interlocking logs, mud mound, sticks ──
+
+function cyl(rT: number, rB: number, h: number, seg: number, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0): THREE.BufferGeometry {
+  const g = new THREE.CylinderGeometry(rT, rB, h, seg);
+  if (rx || ry || rz) g.rotateX(rx).rotateY(ry).rotateZ(rz);
+  g.translate(x, y, z);
+  return g;
+}
+
+function box(w: number, h: number, d: number, x = 0, y = 0, z = 0): THREE.BufferGeometry {
+  const g = new THREE.BoxGeometry(w, h, d);
+  g.translate(x, y, z);
+  return g;
+}
+
+function sphere(r: number, x = 0, y = 0, z = 0, ws = 5, hs = 3): THREE.BufferGeometry {
+  const g = new THREE.SphereGeometry(r, ws, hs);
+  g.translate(x, y, z);
+  return g;
+}
+
+function colorGeo(geo: THREE.BufferGeometry, r: number, g: number, b: number): THREE.BufferGeometry {
+  const colors = new Float32Array(geo.attributes.position.count * 3);
+  for (let i = 0; i < geo.attributes.position.count; i++) {
+    colors[i * 3] = r;
+    colors[i * 3 + 1] = g;
+    colors[i * 3 + 2] = b;
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  return geo;
+}
+
+/** Create a detailed beaver dam from merged primitives */
+function createDamGeometry(): THREE.BufferGeometry {
+  const parts: THREE.BufferGeometry[] = [];
+
+  // ── Main horizontal logs (3 stacked, slightly offset) ──
+  parts.push(colorGeo(cyl(0.18, 0.22, 3.2, 6, 0, 0.2, 0, 0, 0, Math.PI / 2), 0.28, 0.18, 0.08));
+  parts.push(colorGeo(cyl(0.15, 0.19, 2.8, 6, 0.15, 0.5, 0.12, 0, 0.15, Math.PI / 2), 0.32, 0.20, 0.09));
+  parts.push(colorGeo(cyl(0.13, 0.17, 2.4, 6, -0.1, 0.75, -0.05, 0, -0.1, Math.PI / 2), 0.25, 0.16, 0.07));
+
+  // ── Cross-bracing logs (diagonal supports) ──
+  parts.push(colorGeo(cyl(0.1, 0.12, 1.8, 5, 0.4, 0.4, 0.3, 0, 0.8, Math.PI * 0.4), 0.30, 0.19, 0.08));
+  parts.push(colorGeo(cyl(0.09, 0.11, 1.6, 5, -0.3, 0.45, -0.2, 0, -0.6, Math.PI * 0.35), 0.26, 0.17, 0.07));
+
+  // ── Mud/debris mound (irregular base) ──
+  parts.push(colorGeo(sphere(0.6, 0, 0.15, 0, 6, 4), 0.22, 0.16, 0.10));
+  parts.push(colorGeo(sphere(0.45, 0.3, 0.1, 0.25, 5, 3), 0.20, 0.15, 0.09));
+  parts.push(colorGeo(sphere(0.35, -0.4, 0.08, -0.3, 5, 3), 0.24, 0.17, 0.11));
+
+  // ── Small sticks poking out at angles ──
+  parts.push(colorGeo(cyl(0.04, 0.02, 0.9, 3, 0.5, 0.9, 0.15, 0.3, 0.5, 0.2), 0.35, 0.22, 0.10));
+  parts.push(colorGeo(cyl(0.03, 0.02, 0.7, 3, -0.6, 0.85, -0.1, -0.4, -0.3, -0.15), 0.33, 0.21, 0.09));
+  parts.push(colorGeo(cyl(0.035, 0.02, 0.8, 3, 0.2, 1.0, -0.2, 0.5, 0.2, -0.3), 0.30, 0.20, 0.08));
+  parts.push(colorGeo(cyl(0.03, 0.015, 0.6, 3, -0.15, 0.95, 0.3, -0.6, -0.4, 0.25), 0.34, 0.22, 0.10));
+
+  // ── Rocks at base ──
+  parts.push(colorGeo(sphere(0.2, 0.8, 0.05, 0.5, 4, 3), 0.4, 0.38, 0.35));
+  parts.push(colorGeo(sphere(0.15, -0.7, 0.03, -0.4, 4, 3), 0.38, 0.36, 0.33));
+  parts.push(colorGeo(sphere(0.18, 0.1, 0.04, -0.6, 4, 3), 0.42, 0.40, 0.37));
+
+  return mergeGeometries(parts)!;
+}
+
+/** Cattail/reed: tall thin stalk with a brown head */
+function createReedGeometry(): THREE.BufferGeometry {
+  const parts: THREE.BufferGeometry[] = [];
+  // Stalk
+  parts.push(colorGeo(cyl(0.03, 0.04, 2.0, 4, 0, 1.0, 0), 0.15, 0.30, 0.08));
+  // Cattail head
+  parts.push(colorGeo(cyl(0.08, 0.07, 0.4, 5, 0, 2.1, 0), 0.35, 0.18, 0.06));
+  // Leaf blades
+  parts.push(colorGeo(box(0.02, 1.4, 0.15, 0.06, 0.8, 0), 0.12, 0.28, 0.06));
+  parts.push(colorGeo(box(0.02, 1.2, 0.12, -0.05, 0.7, 0.04), 0.14, 0.32, 0.07));
+  return mergeGeometries(parts)!;
+}
+
+const damGeo = createDamGeometry();
+const reedGeo = createReedGeometry();
+
+/** Pond shader — circular water with ripples and shore foam */
 function createPondMaterial(): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     transparent: true,
@@ -45,15 +127,11 @@ function createPondMaterial(): THREE.ShaderMaterial {
       }
 
       void main() {
-        // Radial distance from center
         vec2 centered = vUv * 2.0 - 1.0;
         float dist = length(centered);
-
-        // Soft circular edge
         float edge = 1.0 - smoothstep(0.7, 1.0, dist);
         if (edge < 0.01) discard;
 
-        // Gentle ripples
         vec2 rippleUv = centered * 3.0;
         float n = noise(rippleUv + vec2(uTime * 0.05, uTime * 0.03)) * 0.6
                 + noise(rippleUv * 2.0 + vec2(0.0, uTime * 0.08)) * 0.4;
@@ -61,9 +139,17 @@ function createPondMaterial(): THREE.ShaderMaterial {
 
         vec3 col = uColor + ripple * 0.1;
 
-        // Shore foam at edges
-        float foam = smoothstep(0.6, 0.85, dist) * 0.25;
+        // Concentric ripple rings from center
+        float ring = sin(dist * 12.0 - uTime * 1.5) * 0.5 + 0.5;
+        ring *= smoothstep(0.0, 0.3, dist) * (1.0 - smoothstep(0.6, 0.9, dist));
+        col += ring * 0.04;
+
+        float foam = smoothstep(0.6, 0.88, dist) * 0.3;
         col += foam;
+
+        // Specular highlight
+        float spec = smoothstep(0.92, 0.96, 1.0 - dist) * 0.15;
+        col += spec;
 
         gl_FragColor = vec4(col, uOpacity * edge + foam * 0.3);
       }
@@ -71,115 +157,158 @@ function createPondMaterial(): THREE.ShaderMaterial {
   });
 }
 
-/**
- * Beaver dam markers near the lake/river — log piles with green recovery rings
- * and small ponds that form behind dams.
- */
+/** Muddy shoreline ring around each pond */
+function createShoreMaterial(): THREE.MeshLambertMaterial {
+  return new THREE.MeshLambertMaterial({
+    color: new THREE.Color(0.22, 0.18, 0.12),
+    transparent: true,
+    opacity: 0.7,
+    side: THREE.DoubleSide,
+  });
+}
+
 export function BeaverDams() {
   const damMeshRef = useRef<THREE.InstancedMesh>(null);
   const ringMeshRef = useRef<THREE.InstancedMesh>(null);
-  const log2Ref = useRef<THREE.InstancedMesh>(null);
   const pondMeshRef = useRef<THREE.InstancedMesh>(null);
+  const shoreMeshRef = useRef<THREE.InstancedMesh>(null);
+  const reedMeshRef = useRef<THREE.InstancedMesh>(null);
 
   const pondMat = useMemo(createPondMaterial, []);
+  const shoreMat = useMemo(createShoreMaterial, []);
 
   useFrame((_, delta) => {
     const dams = getDamSites();
-    if (!damMeshRef.current || !ringMeshRef.current || !log2Ref.current || !pondMeshRef.current) return;
+    const refs = [damMeshRef, ringMeshRef, pondMeshRef, shoreMeshRef, reedMeshRef];
+    if (refs.some(r => !r.current)) return;
 
-    // Update pond shader time
     pondMat.uniforms.uTime.value += delta;
 
-    // Color ponds based on riparian health
     const health = getAverageRiparianHealth();
     const degraded = new THREE.Color(0.15, 0.14, 0.09);
     const healthy = new THREE.Color(0.05, 0.18, 0.40);
     pondMat.uniforms.uColor.value.lerpColors(degraded, healthy, health);
     pondMat.uniforms.uOpacity.value = 0.5 + health * 0.25;
 
-    const damColor = new THREE.Color();
+    // Shore gets greener with health
+    shoreMat.color.setRGB(0.22 - health * 0.06, 0.18 + health * 0.08, 0.12 - health * 0.02);
+
     const ringColor = new THREE.Color();
 
     for (let i = 0; i < MAX_DAMS; i++) {
       if (i < dams.length) {
         const d = dams[i];
+        const damAngle = d.x * 0.5;
 
-        // Main log
-        dummy.position.set(d.x, 2.1, d.z);
-        dummy.rotation.set(0, d.x * 0.5, Math.PI * 0.05);
-        dummy.scale.set(0.3, 0.3, 1.8);
+        // ── Dam structure ──
+        dummy.position.set(d.x, 1.6, d.z);
+        dummy.rotation.set(0, damAngle, 0);
+        const damScale = 0.7 + d.health * 0.5;
+        dummy.scale.setScalar(damScale);
         dummy.updateMatrix();
-        damMeshRef.current.setMatrixAt(i, dummy.matrix);
-        damColor.setHSL(0.07, 0.55, 0.2);
-        damMeshRef.current.setColorAt(i, damColor);
+        damMeshRef.current!.setMatrixAt(i, dummy.matrix);
 
-        // Cross log
-        dummy.position.set(d.x + 0.3, 2.2, d.z + 0.2);
-        dummy.rotation.set(0, d.x * 0.5 + 1.2, Math.PI * 0.03);
-        dummy.scale.set(0.25, 0.25, 1.4);
-        dummy.updateMatrix();
-        log2Ref.current.setMatrixAt(i, dummy.matrix);
-        log2Ref.current.setColorAt(i, damColor);
-
-        // Green recovery ring — grows with health, pulses gently
+        // ── Recovery ring ──
         const ringScale = 4 + d.health * 22;
         dummy.position.set(d.x, 0.4, d.z);
         dummy.rotation.set(-Math.PI / 2, 0, 0);
         dummy.scale.set(ringScale, ringScale, 1);
         dummy.updateMatrix();
-        ringMeshRef.current.setMatrixAt(i, dummy.matrix);
+        ringMeshRef.current!.setMatrixAt(i, dummy.matrix);
         ringColor.setHSL(0.33, 0.5 + d.health * 0.4, 0.2 + d.health * 0.3);
-        ringMeshRef.current.setColorAt(i, ringColor);
+        ringMeshRef.current!.setColorAt(i, ringColor);
 
-        // Pond — forms behind the dam, grows with health
-        // Offset pond slightly upstream (negative x direction) from the dam
-        const pondSize = d.health * 6 + 1.5; // 1.5 to 7.5 radius
-        const pondOffsetX = -Math.cos(d.x * 0.5) * 3;
-        const pondOffsetZ = -Math.sin(d.x * 0.5) * 3;
-        dummy.position.set(d.x + pondOffsetX, 1.7, d.z + pondOffsetZ);
+        // ── Pond behind dam ──
+        const pondSize = d.health * 6 + 1.5;
+        const pondOffX = -Math.cos(damAngle) * (3 + d.health * 2);
+        const pondOffZ = -Math.sin(damAngle) * (3 + d.health * 2);
+        dummy.position.set(d.x + pondOffX, 1.65, d.z + pondOffZ);
         dummy.rotation.set(-Math.PI / 2, 0, 0);
         dummy.scale.set(pondSize, pondSize, 1);
         dummy.updateMatrix();
-        pondMeshRef.current.setMatrixAt(i, dummy.matrix);
+        pondMeshRef.current!.setMatrixAt(i, dummy.matrix);
+
+        // ── Muddy shore ring around pond ──
+        const shoreSize = pondSize * 1.35;
+        dummy.position.set(d.x + pondOffX, 1.55, d.z + pondOffZ);
+        dummy.rotation.set(-Math.PI / 2, 0, 0);
+        dummy.scale.set(shoreSize, shoreSize, 1);
+        dummy.updateMatrix();
+        shoreMeshRef.current!.setMatrixAt(i, dummy.matrix);
+
+        // ── Reeds around pond perimeter ──
+        for (let r = 0; r < REEDS_PER_DAM; r++) {
+          const reedIdx = i * REEDS_PER_DAM + r;
+          const angle = (r / REEDS_PER_DAM) * Math.PI * 2 + d.x * 0.3;
+          const reedDist = pondSize * 0.75 + 0.5;
+          const rx = d.x + pondOffX + Math.cos(angle) * reedDist;
+          const rz = d.z + pondOffZ + Math.sin(angle) * reedDist;
+
+          // Only show reeds when health is decent
+          if (d.health > 0.3) {
+            const reedScale = 0.4 + d.health * 0.6;
+            // Slight sway
+            const sway = Math.sin(pondMat.uniforms.uTime.value * 1.2 + r * 1.5 + d.x) * 0.08;
+            dummy.position.set(rx, 1.6, rz);
+            dummy.rotation.set(sway, angle + Math.PI * 0.5, 0);
+            dummy.scale.setScalar(reedScale);
+          } else {
+            dummy.position.set(0, -100, 0);
+            dummy.scale.setScalar(0);
+          }
+          dummy.updateMatrix();
+          reedMeshRef.current!.setMatrixAt(reedIdx, dummy.matrix);
+        }
       } else {
+        // Hide unused slots
         dummy.position.set(0, -100, 0);
         dummy.scale.setScalar(0);
         dummy.updateMatrix();
-        damMeshRef.current.setMatrixAt(i, dummy.matrix);
-        ringMeshRef.current.setMatrixAt(i, dummy.matrix);
-        log2Ref.current.setMatrixAt(i, dummy.matrix);
-        pondMeshRef.current.setMatrixAt(i, dummy.matrix);
+        damMeshRef.current!.setMatrixAt(i, dummy.matrix);
+        ringMeshRef.current!.setMatrixAt(i, dummy.matrix);
+        pondMeshRef.current!.setMatrixAt(i, dummy.matrix);
+        shoreMeshRef.current!.setMatrixAt(i, dummy.matrix);
+
+        for (let r = 0; r < REEDS_PER_DAM; r++) {
+          reedMeshRef.current!.setMatrixAt(i * REEDS_PER_DAM + r, dummy.matrix);
+        }
       }
     }
-    damMeshRef.current.instanceMatrix.needsUpdate = true;
-    ringMeshRef.current.instanceMatrix.needsUpdate = true;
-    log2Ref.current.instanceMatrix.needsUpdate = true;
-    pondMeshRef.current.instanceMatrix.needsUpdate = true;
-    if (damMeshRef.current.instanceColor) damMeshRef.current.instanceColor.needsUpdate = true;
-    if (ringMeshRef.current.instanceColor) ringMeshRef.current.instanceColor.needsUpdate = true;
-    if (log2Ref.current.instanceColor) log2Ref.current.instanceColor.needsUpdate = true;
+
+    damMeshRef.current!.instanceMatrix.needsUpdate = true;
+    ringMeshRef.current!.instanceMatrix.needsUpdate = true;
+    pondMeshRef.current!.instanceMatrix.needsUpdate = true;
+    shoreMeshRef.current!.instanceMatrix.needsUpdate = true;
+    reedMeshRef.current!.instanceMatrix.needsUpdate = true;
+    if (ringMeshRef.current!.instanceColor) ringMeshRef.current!.instanceColor.needsUpdate = true;
   });
 
   return (
     <>
-      {/* Main logs */}
-      <instancedMesh ref={damMeshRef} args={[undefined, undefined, MAX_DAMS]} castShadow>
-        <cylinderGeometry args={[0.5, 0.5, 1, 6]} />
+      {/* Elaborate dam structures */}
+      <instancedMesh ref={damMeshRef} args={[damGeo, undefined, MAX_DAMS]} castShadow receiveShadow>
         <meshLambertMaterial vertexColors />
       </instancedMesh>
-      {/* Cross logs */}
-      <instancedMesh ref={log2Ref} args={[undefined, undefined, MAX_DAMS]} castShadow>
-        <cylinderGeometry args={[0.5, 0.5, 1, 6]} />
-        <meshLambertMaterial vertexColors />
-      </instancedMesh>
+
       {/* Recovery rings */}
       <instancedMesh ref={ringMeshRef} args={[undefined, undefined, MAX_DAMS]}>
         <ringGeometry args={[0.85, 1, 32]} />
         <meshBasicMaterial vertexColors transparent opacity={0.35} side={THREE.DoubleSide} />
       </instancedMesh>
-      {/* Beaver ponds — small water bodies behind dams */}
+
+      {/* Muddy shore around ponds */}
+      <instancedMesh ref={shoreMeshRef} args={[undefined, undefined, MAX_DAMS]} material={shoreMat}>
+        <circleGeometry args={[1, 24]} />
+      </instancedMesh>
+
+      {/* Beaver ponds */}
       <instancedMesh ref={pondMeshRef} args={[undefined, undefined, MAX_DAMS]} material={pondMat}>
         <circleGeometry args={[1, 24]} />
+      </instancedMesh>
+
+      {/* Cattail reeds around pond edges */}
+      <instancedMesh ref={reedMeshRef} args={[reedGeo, undefined, MAX_DAMS * REEDS_PER_DAM]} castShadow>
+        <meshLambertMaterial vertexColors />
       </instancedMesh>
     </>
   );
