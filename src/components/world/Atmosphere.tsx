@@ -124,8 +124,8 @@ export function Atmosphere() {
         attach="fog"
         args={[
           season === 'winter' ? '#b8c0cc' : season === 'autumn' ? '#c4a882' : '#a8b8c8',
-          60,
-          180,
+          120,
+          350,
         ]}
       />
     </>
