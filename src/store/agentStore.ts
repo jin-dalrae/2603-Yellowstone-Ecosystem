@@ -36,6 +36,7 @@ interface AgentState {
   selectedAgentId: number | null;
   narration: string;
   narrationLoading: boolean;
+  extinctSpecies: AgentType | null;
   selectAgent: (id: number | null) => void;
   spawnAgents: (type: AgentType, count: number) => void;
   cullAgents: (type: AgentType, count: number) => void;
@@ -43,6 +44,7 @@ interface AgentState {
   resetScenario: (populations: Partial<Record<AgentType, number>>) => void;
   setNarration: (text: string) => void;
   setNarrationLoading: (loading: boolean) => void;
+  clearExtinction: () => void;
   tickAgents: (delta: number, season?: Season) => void;
 }
 
