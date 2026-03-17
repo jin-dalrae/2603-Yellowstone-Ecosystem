@@ -693,22 +693,20 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
   }
 
   // Wolf intraspecific strife — #1 cause of wolf mortality by 2005 (NPS data)
-  // When wolf density is high, territorial aggression kills dispersing wolves
-  if (wolves.length >= 6) {
+  // Only kicks in at high density, and mostly affects weak dispersers
+  if (wolves.length >= 10) {
     for (const wolf of wolves) {
       if (!wolf.alive) continue;
-      // Count nearby wolves (proxy for territorial overlap)
       let nearbyCount = 0;
       for (const other of wolves) {
         if (other.id === wolf.id || !other.alive) continue;
         const dx = wolf.x - other.x;
         const dz = wolf.z - other.z;
-        if (Math.sqrt(dx * dx + dz * dz) < 20) nearbyCount++;
+        if (Math.sqrt(dx * dx + dz * dz) < 15) nearbyCount++;
       }
-      // Low-energy wolves in crowded areas die from strife
-      // Probability scales with crowding and inversely with energy
-      if (nearbyCount >= 4 && wolf.energy < 50) {
-        const strifeChance = 0.0008 * (nearbyCount - 3) * (1 - wolf.energy / 100);
+      // Only very crowded, low-energy wolves die from strife
+      if (nearbyCount >= 5 && wolf.energy < 35) {
+        const strifeChance = 0.0003 * (nearbyCount - 4) * (1 - wolf.energy / 100);
         if (Math.random() < strifeChance) {
           wolf.alive = false;
           events.push(makeEvent('strife', 'wolf', 'Wolf killed in pack territorial dispute', wolf.x, wolf.z));

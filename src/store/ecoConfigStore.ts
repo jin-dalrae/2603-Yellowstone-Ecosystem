@@ -120,7 +120,7 @@ const DEFAULTS = {
 
   geneticFitness: { ...DEFAULT_FITNESS },
 
-  energyPerKill: 60,
+  energyPerKill: 70,
   reproduceEnergy: 80,
   killDist: 2.5,
 };
