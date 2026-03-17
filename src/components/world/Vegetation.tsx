@@ -183,50 +183,59 @@ export function Vegetation() {
 
   const initialized = useRef(false);
 
+  const frameCount = useRef(0);
+
   useFrame(() => {
     const d = dummyRef.current;
     const si = SEASON_INDEX[useSimulationStore.getState().season];
+    let visibleCount = 0;
 
     for (let vi = 0; vi < 3; vi++) {
       const mesh = meshRefs[vi].current;
       if (!mesh) continue;
       const trees = treeGroups[vi];
 
-      if (!initialized.current && vi === 2) {
-        // Will init all on first pass then flip flag after last group
-      }
-
       for (let i = 0; i < trees.length; i++) {
         const t = trees[i];
         let scaleMult = 1;
+        let alive = true;
 
-        // Riparian response: tree size reflects health
+        // Riparian response: tree size reflects health, hide dead trees
         if (t.isRiparian) {
           const health = getRiparianTreeHealth(t.x, t.z);
           if (health >= 0) {
-            scaleMult = 0.3 + health * 0.7; // 0.3 at 0 health, 1.0 at full
+            if (health < 0.15) {
+              alive = false;
+            } else {
+              scaleMult = 0.2 + health * 0.8;
+            }
           }
         }
 
-        d.position.set(t.x, t.y, t.z);
-        d.scale.set(
-          t.scale * scaleMult,
-          t.scale * t.scaleY * scaleMult,
-          t.scale * scaleMult
-        );
+        if (alive) {
+          visibleCount++;
+          d.position.set(t.x, t.y, t.z);
+          d.scale.set(
+            t.scale * scaleMult,
+            t.scale * t.scaleY * scaleMult,
+            t.scale * scaleMult
+          );
+        } else {
+          // Hide by scaling to zero
+          d.position.set(0, -100, 0);
+          d.scale.set(0, 0, 0);
+        }
         d.rotation.y = t.rotY;
         d.updateMatrix();
         mesh.setMatrixAt(i, d.matrix);
 
         // Seasonal color modulation via instance color
         if (mesh.instanceColor) {
-          // Get base canopy green and modulate by season
           let rMod = 0, gMod = 0, bMod = 0;
-          if (si === 0) { gMod = 0.08; } // spring
-          else if (si === 2) { rMod = 0.3; gMod = 0.05; bMod = -0.02; } // autumn
-          else if (si === 3) { rMod = 0.15; gMod = -0.05; bMod = 0.08; } // winter
+          if (si === 0) { gMod = 0.08; }
+          else if (si === 2) { rMod = 0.3; gMod = 0.05; bMod = -0.02; }
+          else if (si === 3) { rMod = 0.15; gMod = -0.05; bMod = 0.08; }
 
-          // Riparian trees get extra green when healthy
           if (t.isRiparian) {
             const health = getRiparianTreeHealth(t.x, t.z);
             if (health > 0.5) {
@@ -241,6 +250,12 @@ export function Vegetation() {
 
       mesh.instanceMatrix.needsUpdate = true;
       if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    }
+
+    // Update tree count in store every 30 frames
+    frameCount.current++;
+    if (frameCount.current % 30 === 0) {
+      useAgentStore.getState().setTreeCount(visibleCount);
     }
 
     initialized.current = true;

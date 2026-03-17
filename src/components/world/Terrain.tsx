@@ -121,8 +121,8 @@ const fragmentShader = `
 
     color *= ambientColor + diff * 0.65;
 
-    // Distance fog
-    float fogDist = length(vWorldPos.xz) / 120.0;
+    // Distance fog (reduced)
+    float fogDist = length(vWorldPos.xz) / 160.0;
     vec3 fogColor = seasonMix(
       vec3(0.55, 0.65, 0.72),
       vec3(0.6, 0.68, 0.75),
@@ -130,7 +130,7 @@ const fragmentShader = `
       vec3(0.72, 0.75, 0.82),
       uSeason
     );
-    color = mix(color, fogColor, clamp(fogDist * fogDist, 0.0, 0.7));
+    color = mix(color, fogColor, clamp(fogDist * fogDist, 0.0, 0.4));
 
     gl_FragColor = vec4(color, 1.0);
   }
