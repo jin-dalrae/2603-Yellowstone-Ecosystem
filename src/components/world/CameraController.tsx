@@ -28,8 +28,16 @@ const lerpCam = new THREE.Vector3();
 
 export function CameraController() {
   const cameraMode = useSimulationStore((s) => s.cameraMode);
+  const fov = useSimulationStore((s) => s.fov);
   const { camera, gl } = useThree();
   const controlsRef = useRef<any>(null);
+
+  useEffect(() => {
+    if ((camera as THREE.PerspectiveCamera).fov !== undefined) {
+      (camera as THREE.PerspectiveCamera).fov = fov;
+      (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
+    }
+  }, [fov, camera]);
 
   useEffect(() => {
     if (cameraMode === 'god') {
