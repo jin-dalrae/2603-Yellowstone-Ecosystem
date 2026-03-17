@@ -2,7 +2,7 @@
 
 import { useEcoConfigStore } from '@/store/ecoConfigStore';
 import type { Season } from '@/store/simulationStore';
-import { updateRiparianState } from '@/lib/riparianState';
+import { updateRiparianState, getRiparianTreeHealth, getAverageRiparianHealth } from '@/lib/riparianState';
 
 export type AgentType = 'wolf' | 'elk' | 'bear' | 'beaver' | 'raven' | 'bison' | 'moose' | 'coyote' | 'osprey';
 
@@ -380,7 +380,10 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
         const [rx, rz] = riverAttraction(agent);
         fx += rx;
         fz += rz;
-        agent.energy += 1.5 * delta;
+        // Beavers thrive when riparian trees are healthy (food source: bark, branches)
+        const beaverTreeHealth = getRiparianTreeHealth(agent.x, agent.z);
+        const treeBenefit = beaverTreeHealth >= 0 ? beaverTreeHealth : 0.4; // default if not in riparian zone
+        agent.energy += (0.5 + treeBenefit * 1.5) * delta; // 0.5-2.0 energy/s based on tree health
         agent.energy -= cfg.beaverEnergyDrain * delta;
         break;
       }
@@ -435,7 +438,10 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
         fz += (Math.random() - 0.5) * 1.5;
         const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
         // Winter: bark browsing — reduced graze rate
-        const mooseGrazeMult = isWinter ? 0.5 : 1.0;
+        // Moose benefit from healthy riparian vegetation (browse on willow/aspen)
+        const mooseTreeHealth = getRiparianTreeHealth(agent.x, agent.z);
+        const mooseVegBonus = mooseTreeHealth >= 0 ? mooseTreeHealth : 0.3;
+        const mooseGrazeMult = (isWinter ? 0.5 : 1.0) * (0.5 + mooseVegBonus * 0.8);
         if (speed < 2) agent.energy += cfg.mooseGrazeRate * mooseGrazeMult * delta;
         agent.energy -= cfg.mooseEnergyDrain * (isWinter ? 1.3 : 1.0) * delta;
         break;
@@ -476,8 +482,9 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
           agent.energy -= cfg.ospreyEnergyDrain * delta;
           const riverDist = Math.abs(agent.z - riverZ(agent.x));
           if (riverDist < 8) {
-            // Spring spawning = best fishing
-            const fishMult = isSpring ? 1.5 : 1.0;
+            // Healthier riparian zones = more fish
+            const riverHealth = getAverageRiparianHealth();
+            const fishMult = (isSpring ? 1.5 : 1.0) * (0.5 + riverHealth * 0.8);
             agent.energy += cfg.ospreyFishRate * fishMult * delta;
           }
         }
