@@ -187,6 +187,10 @@ export function Water() {
     const baseColor = new THREE.Color().lerpColors(degradedBrown, healthyBlue, riparianHealth);
     const c = new THREE.Color().lerpColors(baseColor, winterBlue, t);
     riverMat.uniforms.uColor.value.copy(c);
+    // River width: min 0.35 (narrow/degraded) to 1.0 (full/healthy)
+    const targetWidth = 0.35 + riparianHealth * 0.65;
+    const curWidth = riverMat.uniforms.uWidthScale.value;
+    riverMat.uniforms.uWidthScale.value += (targetWidth - curWidth) * Math.min(1, delta * 0.5);
     // Healthier water is clearer (higher opacity), degraded is murkier
     riverMat.uniforms.uOpacity.value = (0.55 + riparianHealth * 0.25) - t * 0.1;
 
