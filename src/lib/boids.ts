@@ -427,12 +427,11 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
 
     switch (agent.type) {
       case 'wolf': {
-        const [hx, hz] = chaseTarget(agent, elks, cfg.wolfChaseDist);
-        // Winter: increased aggression toward weakened prey
+        // Pack flanking hunt — wolves coordinate approach angles
+        const [hx, hz] = packFlankChase(agent, wolves, elks, cfg.wolfChaseDist);
         const aggressionMult = isWinter ? 1.5 : 1.0;
         fx += hx * aggressionMult;
         fz += hz * aggressionMult;
-        // Summer: pup-rearing reduces range (less movement)
         const drainMult = isSummer ? 0.8 : isWinter ? 1.2 : 1.0;
         agent.energy -= cfg.wolfEnergyDrain * drainMult * delta;
         break;
