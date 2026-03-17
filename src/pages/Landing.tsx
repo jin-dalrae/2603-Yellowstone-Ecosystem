@@ -8,8 +8,6 @@ import {
 import heroImage from '@/assets/hero-yellowstone.jpg';
 import wolfIcon from '@/assets/wolf-icon.png';
 import simScreenshot from '@/assets/screenshot-simulation.png';
-import closeup1 from '@/assets/screenshot-closeup-1.png';
-import closeup2 from '@/assets/screenshot-closeup-2.png';
 import { CascadeSVG } from '@/components/landing/CascadeSVG';
 import { ArchitectureSVG } from '@/components/landing/ArchitectureSVG';
 import { PulseRingSVG } from '@/components/landing/PulseRingSVG';
