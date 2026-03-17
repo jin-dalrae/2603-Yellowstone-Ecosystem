@@ -261,7 +261,7 @@ export function StatusPanel() {
   const [collapsed, setCollapsed] = useState(false);
   const {
     wolfCount, elkCount, bearCount, beaverCount, ravenCount,
-    bisonCount, mooseCount, coyoteCount, ospreyCount,
+    bisonCount, mooseCount, coyoteCount, ospreyCount, treeCount,
     populationHistory, events, narration, narrationLoading,
   } = useAgentStore();
 
@@ -287,6 +287,7 @@ export function StatusPanel() {
     { emoji: '🫎', label: 'Moose', count: mooseCount },
     { emoji: '🐺', label: 'Coyotes', count: coyoteCount },
     { emoji: '🦅', label: 'Osprey', count: ospreyCount },
+    { emoji: '🌲', label: 'Trees', count: treeCount },
   ];
 
   return (

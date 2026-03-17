@@ -1,12 +1,13 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { fbm } from '@/lib/noise';
 import { useSimulationStore, SEASON_INDEX } from '@/store/simulationStore';
+import { useAgentStore } from '@/store/agentStore';
 import { getRiparianTreeHealth } from '@/lib/riparianState';
 
-const TREE_COUNT = 1200;
+const TREE_COUNT = 1800;
 const SIZE = 200;
 const MAX_HEIGHT = 28;
 
@@ -133,13 +134,21 @@ export function Vegetation() {
       const z = (rng() - 0.5) * SIZE * 0.9;
       const h = getHeight(x, z);
       const riverDist = Math.abs(z - Math.sin(x * 0.03) * 20);
+      const lakeDist = Math.sqrt((x - 25) ** 2 + (z + 15) ** 2);
 
       // Allow trees closer to river now (riparian corridor)
       if (h < 3 || h > 22) continue;
       if (riverDist < 4) continue; // still not in water
+      if (lakeDist < 15) continue; // not in lake
 
       const isRiparian = riverDist < 20;
-      const density = h > 7 && h < 16 ? 0.7 : isRiparian ? 0.6 : 0.3;
+      const isLakeshore = lakeDist < 25;
+
+      // Higher density near water bodies
+      let density = h > 7 && h < 16 ? 0.7 : 0.3;
+      if (isRiparian) density = Math.max(density, 0.65);
+      if (isLakeshore) density = Math.max(density, 0.7);
+
       if (rng() > density) continue;
 
       const totalPlaced = groups[0].length + groups[1].length + groups[2].length;
@@ -154,7 +163,7 @@ export function Vegetation() {
         rotY: rng() * Math.PI * 2,
         scaleY: 1 + rng() * 0.4,
         variant: variantIdx,
-        isRiparian,
+        isRiparian: isRiparian || isLakeshore,
       };
 
       groups[variantIdx].push(tree);
@@ -164,6 +173,13 @@ export function Vegetation() {
 
     return { treeGroups: groups, baseScales: allBaseScales };
   }, []);
+
+  const totalTrees = treeGroups[0].length + treeGroups[1].length + treeGroups[2].length;
+
+  // Report tree count to store once
+  useEffect(() => {
+    useAgentStore.getState().setTreeCount(totalTrees);
+  }, [totalTrees]);
 
   const initialized = useRef(false);
 
