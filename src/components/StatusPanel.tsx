@@ -52,29 +52,19 @@ function PopulationChart({ data }: { data: PopSnapshot[] }) {
     );
   }
 
-  const gradients = [
-    { id: 'wolfGrad', color: 'hsl(0 70% 50%)' },
-    { id: 'elkGrad', color: 'hsl(142 50% 45%)' },
-    { id: 'bearGrad', color: 'hsl(30 60% 35%)' },
-    { id: 'beaverGrad', color: 'hsl(25 50% 40%)' },
-    { id: 'ravenGrad', color: 'hsl(260 30% 30%)' },
-    { id: 'bisonGrad', color: 'hsl(20 55% 30%)' },
-    { id: 'mooseGrad', color: 'hsl(35 45% 35%)' },
-    { id: 'coyoteGrad', color: 'hsl(45 50% 50%)' },
-    { id: 'ospreyGrad', color: 'hsl(210 60% 50%)' },
-  ];
+  const speciesKeys = Object.keys(SPECIES_COLORS) as (keyof typeof SPECIES_COLORS)[];
 
-  const series = [
-    { key: 'wolves', stroke: 'hsl(0 70% 50%)', fill: 'url(#wolfGrad)', w: 2 },
-    { key: 'elk', stroke: 'hsl(142 50% 45%)', fill: 'url(#elkGrad)', w: 2 },
-    { key: 'bears', stroke: 'hsl(30 60% 35%)', fill: 'url(#bearGrad)', w: 1.5 },
-    { key: 'beavers', stroke: 'hsl(25 50% 40%)', fill: 'url(#beaverGrad)', w: 1.5 },
-    { key: 'ravens', stroke: 'hsl(260 30% 30%)', fill: 'url(#ravenGrad)', w: 1.5 },
-    { key: 'bison', stroke: 'hsl(20 55% 30%)', fill: 'url(#bisonGrad)', w: 1.5 },
-    { key: 'moose', stroke: 'hsl(35 45% 35%)', fill: 'url(#mooseGrad)', w: 1 },
-    { key: 'coyotes', stroke: 'hsl(45 50% 50%)', fill: 'url(#coyoteGrad)', w: 1 },
-    { key: 'ospreys', stroke: 'hsl(210 60% 50%)', fill: 'url(#ospreyGrad)', w: 1 },
-  ];
+  const gradients = speciesKeys.map(key => ({
+    id: `${key}Grad`,
+    color: SPECIES_COLORS[key],
+  }));
+
+  const series = speciesKeys.map(key => ({
+    key,
+    stroke: SPECIES_COLORS[key],
+    fill: `url(#${key}Grad)`,
+    w: ['wolves', 'elk', 'bison'].includes(key) ? 2 : 1.5,
+  }));
 
   return (
     <ChartContainer config={chartConfig} className="h-36 w-full">
