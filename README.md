@@ -104,7 +104,7 @@ This is not a visualization. This is a *simulation*. Every data point is compute
 
 | Species | Role | Behavior |
 |---------|------|----------|
-| 🐺 Wolf | Apex predator | Pack hunting, elk pursuit, seasonal aggression |
+| 🐺 Wolf | Apex predator | Elk pursuit, cooperative hunting proximity, seasonal aggression |
 | 🦌 Elk | Primary herbivore | Grazing, flee response, riverbank pressure |
 | 🐻 Bear | Omnivore predator | Opportunistic hunting, foraging, solitary |
 | 🦬 Bison | Megaherbivore | Herd movement, geothermal winter refuge |
