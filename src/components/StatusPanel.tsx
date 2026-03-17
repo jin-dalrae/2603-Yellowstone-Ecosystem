@@ -44,6 +44,7 @@ const EVENT_ICONS: Record<SimEvent['type'], React.ReactNode> = {
   respawn: <AlertTriangle className="w-3 h-3 text-accent shrink-0" />,
   starvation: <Utensils className="w-3 h-3 text-muted-foreground shrink-0" />,
   dam_built: <Utensils className="w-3 h-3 text-primary shrink-0" />,
+  strife: <Skull className="w-3 h-3 text-orange-500 shrink-0" />,
 };
 
 const EVENT_TYPE_LABELS: Record<SimEvent['type'], string> = {
