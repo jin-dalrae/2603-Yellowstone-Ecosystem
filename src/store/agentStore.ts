@@ -151,6 +151,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         tick: newTick, wolves: wolfCount, elk: elkCount,
         bears: bearCount, beavers: beaverCount, ravens: ravenCount,
         bison: bisonCount, moose: mooseCount, coyotes: coyoteCount, ospreys: ospreyCount,
+        trees: get().treeCount,
       }].slice(-MAX_HISTORY);
     }
 
