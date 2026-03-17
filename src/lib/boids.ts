@@ -731,7 +731,7 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
       const tooClose = damSites.some(d => Math.hypot(d.x - beaver.x, d.z - beaver.z) < 15);
       if (!tooClose) {
         // Estimate terrain height at dam site
-        const damY = 1.5 + fbm(beaver.x * 0.008, beaver.z * 0.008, 4) * 3;
+        const damY = 1.5 + Math.max(0, noise2D(beaver.x * 0.008, beaver.z * 0.008)) * 4;
         damSites.push({ x: beaver.x, y: damY, z: beaver.z, age: 0, health: 0.1 });
         events.push(makeEvent('dam_built', 'beaver', 'Beaver built a dam — riparian recovery begins', beaver.x, beaver.z));
       }
