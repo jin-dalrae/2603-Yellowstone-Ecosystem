@@ -33,9 +33,9 @@ function createRiverGeometry(): THREE.BufferGeometry {
     const t = i / SEGMENTS;
     const x = -110 + t * 220;
     const centerZ = Math.sin(x * 0.03) * 20;
-    // Use terrain height at river center, slightly below ground
+    // Water sits slightly above terrain at river center
     const terrainH = getHeight(x, centerZ);
-    const h = Math.max(0.8, terrainH - 0.5);
+    const h = terrainH + 0.3;
 
     const dx = 1;
     const dz = Math.cos(x * 0.03) * 20 * 0.03;
@@ -50,7 +50,7 @@ function createRiverGeometry(): THREE.BufferGeometry {
     const lx = x + nx * MAX_HALF_WIDTH;
     const lz = centerZ + nz * MAX_HALF_WIDTH;
     const lTerrainH = getHeight(lx, lz);
-    const lh = Math.max(0.8, lTerrainH - 0.5);
+    const lh = lTerrainH + 0.3;
     positions.push(lx, lh, lz);
     normals.push(nx, 0, nz);
     uvs.push(0, t * 8);
@@ -59,7 +59,7 @@ function createRiverGeometry(): THREE.BufferGeometry {
     const rx = x - nx * MAX_HALF_WIDTH;
     const rz = centerZ - nz * MAX_HALF_WIDTH;
     const rTerrainH = getHeight(rx, rz);
-    const rh = Math.max(0.8, rTerrainH - 0.5);
+    const rh = rTerrainH + 0.3;
     positions.push(rx, rh, rz);
     normals.push(-nx, 0, -nz);
     uvs.push(1, t * 8);
@@ -78,7 +78,7 @@ function createRiverGeometry(): THREE.BufferGeometry {
     const x = -110 + t * 220;
     const centerZ = Math.sin(x * 0.03) * 20;
     const terrainH = getHeight(x, centerZ);
-    const h = Math.max(0.8, terrainH - 0.5);
+    const h = terrainH + 0.3;
     centers[i * 6] = x;
     centers[i * 6 + 1] = h;
     centers[i * 6 + 2] = centerZ;
@@ -209,7 +209,7 @@ export function Water() {
   return (
     <>
       {/* Lake */}
-      <mesh ref={lakeRef} geometry={lakeGeo} position={[25, Math.max(1.5, getHeight(25, -15) - 0.3), -15]} receiveShadow>
+      <mesh ref={lakeRef} geometry={lakeGeo} position={[25, getHeight(25, -15) + 0.3, -15]} receiveShadow>
         <meshStandardMaterial
           ref={lakeMaterialRef}
           color={[0.08, 0.22, 0.42]}
