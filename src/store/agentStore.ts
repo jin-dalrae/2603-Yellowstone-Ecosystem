@@ -68,6 +68,12 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   tickCounter: 0,
   selectedAgentId: null,
   selectAgent: (id) => set({ selectedAgentId: id }),
+  spawnAgents: (type, count) => {
+    const { agents } = get();
+    const newAgents = [];
+    for (let i = 0; i < count; i++) newAgents.push(createAgent(type));
+    set({ agents: [...agents, ...newAgents] });
+  },
   tickAgents: (delta: number, season?: Season) => {
     const { agents, events, populationHistory, tickCounter } = get();
     const result = tickAgents(agents, delta, season);
