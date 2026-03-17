@@ -67,6 +67,7 @@ function PopulationChart({ data }: { data: PopSnapshot[] }) {
   }));
 
   return (
+    <>
     <ChartContainer config={chartConfig} className="h-36 w-full">
       <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
         <defs>
