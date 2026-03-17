@@ -134,9 +134,9 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   clearExtinction: () => set({ extinctSpecies: null }),
   setNarration: (narration) => set({ narration }),
   setNarrationLoading: (narrationLoading) => set({ narrationLoading }),
-  tickAgents: (delta: number, season?: Season) => {
+  tickAgents: (delta: number, season?: Season, year?: number) => {
     const { agents, events, populationHistory, tickCounter } = get();
-    const result = tickAgents(agents, delta, season);
+    const result = tickAgents(agents, delta, season, year);
     const wolfCount = result.agents.filter(a => a.type === 'wolf' && a.alive).length;
     const elkCount = result.agents.filter(a => a.type === 'elk' && a.alive).length;
     const bearCount = result.agents.filter(a => a.type === 'bear' && a.alive).length;

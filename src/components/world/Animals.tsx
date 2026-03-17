@@ -142,7 +142,7 @@ export function Animals() {
     const simState = useSimulationStore.getState();
     if (!simState.isPlaying) return;
     const scaledDelta = delta * simState.timeSpeed;
-    useAgentStore.getState().tickAgents(scaledDelta, simState.season);
+    useAgentStore.getState().tickAgents(scaledDelta, simState.season, simState.year);
 
     const selectedId = useAgentStore.getState().selectedAgentId;
     if (selectedId !== null) {
