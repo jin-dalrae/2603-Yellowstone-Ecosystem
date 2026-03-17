@@ -233,14 +233,14 @@ export function Vegetation() {
 
         if (t.isSapling) {
           // Saplings only appear when health > 0.65
+          // Real willows take 3-5 years; at ~2min/sim-year, target ~6-10min for full growth
           if (health < 0.65) {
-            // Shrink back if health drops
-            t.growthProgress = Math.max(0, t.growthProgress - delta * 0.3);
+            // Shrink back if health drops (die-off is faster than growth)
+            t.growthProgress = Math.max(0, t.growthProgress - delta * 0.15);
           } else {
-            // Grow towards full size based on health
+            // Grow towards full size based on health — very slow, ~0.012/s = ~80s to full
             const targetGrowth = Math.min(1, (health - 0.65) / 0.35);
-            // Slowly grow toward target
-            t.growthProgress = Math.min(targetGrowth, t.growthProgress + delta * 0.08);
+            t.growthProgress = Math.min(targetGrowth, t.growthProgress + delta * 0.012);
           }
 
           if (t.growthProgress < 0.01) {
