@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Agent, SimEvent, createAgent, tickAgents } from '@/lib/boids';
+import type { Season } from '@/store/simulationStore';
 
 export interface PopSnapshot {
   tick: number;
