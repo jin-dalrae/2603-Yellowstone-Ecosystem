@@ -184,6 +184,9 @@ export function Water() {
 
       {/* Riverbanks — subtle shoreline strips */}
       <RiverBanks />
+
+      {/* Lake bank ring */}
+      <LakeBank position={[25, 0, -15]} radius={14} />
     </>
   );
 }
