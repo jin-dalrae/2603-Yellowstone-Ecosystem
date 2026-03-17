@@ -114,7 +114,7 @@ const SPECIES_SECTIONS: SpeciesSection[] = [
     ],
   },
   {
-    emoji: '🐺', label: 'Coyote',
+    emoji: '🐺', label: 'Coyote', type: 'coyote' as AgentType,
     sliders: [
       { label: 'Energy Drain /s', key: 'coyoteEnergyDrain', min: 0.5, max: 5, step: 0.5 },
       { label: 'Repro Chance', key: 'coyoteReproChance', min: 0.001, max: 0.01, step: 0.001 },
