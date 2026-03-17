@@ -18,6 +18,12 @@ export interface ScenarioPreset {
   apply: () => void;
 }
 
+interface SavedCameraView {
+  px: number; py: number; pz: number;
+  tx: number; ty: number; tz: number;
+  fov: number;
+}
+
 interface SimulationState {
   season: Season;
   setSeason: (s: Season) => void;
@@ -31,6 +37,8 @@ interface SimulationState {
   setCameraMode: (m: CameraMode) => void;
   fov: number;
   setFov: (v: number) => void;
+  savedCameraView: SavedCameraView | null;
+  saveDefaultView: (view: SavedCameraView) => void;
   winterSeverity: number;
   setWinterSeverity: (v: number) => void;
   refugePolicy: RefugePolicy;
@@ -59,6 +67,16 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   setCameraMode: (cameraMode) => set({ cameraMode }),
   fov: 60,
   setFov: (fov) => set({ fov }),
+  savedCameraView: (() => {
+    try {
+      const s = localStorage.getItem('ys_default_camera');
+      return s ? JSON.parse(s) : null;
+    } catch { return null; }
+  })(),
+  saveDefaultView: (view) => {
+    localStorage.setItem('ys_default_camera', JSON.stringify(view));
+    set({ savedCameraView: view, fov: view.fov });
+  },
   winterSeverity: 5,
   setWinterSeverity: (winterSeverity) => set({ winterSeverity }),
   refugePolicy: 'open',

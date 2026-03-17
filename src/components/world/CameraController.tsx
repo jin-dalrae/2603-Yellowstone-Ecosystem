@@ -29,8 +29,10 @@ const lerpCam = new THREE.Vector3();
 export function CameraController() {
   const cameraMode = useSimulationStore((s) => s.cameraMode);
   const fov = useSimulationStore((s) => s.fov);
+  const savedView = useSimulationStore((s) => s.savedCameraView);
   const { camera, gl } = useThree();
   const controlsRef = useRef<any>(null);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
     if ((camera as THREE.PerspectiveCamera).fov !== undefined) {
@@ -39,6 +41,13 @@ export function CameraController() {
     }
   }, [fov, camera]);
 
+  // Expose camera for save-view feature
+  useEffect(() => {
+    (window as any).__THREE_CAMERA__ = camera;
+    if (controlsRef.current) (window as any).__THREE_CONTROLS__ = controlsRef.current;
+  });
+
+  // Apply saved or default view on mode change
   useEffect(() => {
     if (cameraMode === 'god') {
       camera.position.set(0, 120, 0.1);
@@ -47,14 +56,33 @@ export function CameraController() {
         controlsRef.current.update();
       }
     } else if (cameraMode === 'orbit') {
-      camera.position.set(60, 45, 60);
-      if (controlsRef.current) {
-        controlsRef.current.target.set(0, 5, 0);
-        controlsRef.current.update();
+      if (savedView && !initializedRef.current) {
+        // Use saved default on first load
+        camera.position.set(savedView.px, savedView.py, savedView.pz);
+        if (controlsRef.current) {
+          controlsRef.current.target.set(savedView.tx, savedView.ty, savedView.tz);
+          controlsRef.current.update();
+        }
+        initializedRef.current = true;
+      } else if (!savedView && !initializedRef.current) {
+        camera.position.set(60, 45, 60);
+        if (controlsRef.current) {
+          controlsRef.current.target.set(0, 5, 0);
+          controlsRef.current.update();
+        }
+        initializedRef.current = true;
+      } else {
+        // Switching back to orbit from god/follow — restore saved or default
+        const v = savedView || { px: 60, py: 45, pz: 60, tx: 0, ty: 5, tz: 0 };
+        camera.position.set(v.px, v.py, v.pz);
+        if (controlsRef.current) {
+          controlsRef.current.target.set(v.tx, v.ty, v.tz);
+          controlsRef.current.update();
+        }
       }
     }
     // follow mode is handled per-frame
-  }, [cameraMode, camera]);
+  }, [cameraMode, camera, savedView]);
 
   useFrame(() => {
     if (cameraMode !== 'follow') return;
