@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useSimulationStore, type Season, type CameraMode } from '@/store/simulationStore';
 import { useEcoConfigStore } from '@/store/ecoConfigStore';
-import { Snowflake, Sun, Leaf, Flower2, Eye, Orbit, Play, Pause, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import { useAgentStore } from '@/store/agentStore';
+import { Snowflake, Sun, Leaf, Flower2, Eye, Orbit, Play, Pause, ChevronLeft, ChevronRight, RotateCcw, Plus } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
+import type { AgentType } from '@/lib/boids';
 
 const SEASONS: { key: Season; label: string; icon: React.ReactNode }[] = [
   { key: 'spring', label: 'Spring', icon: <Flower2 className="w-4 h-4" /> },
