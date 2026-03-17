@@ -18,6 +18,12 @@ export interface ScenarioPreset {
   apply: () => void;
 }
 
+interface SavedCameraView {
+  px: number; py: number; pz: number;
+  tx: number; ty: number; tz: number;
+  fov: number;
+}
+
 interface SimulationState {
   season: Season;
   setSeason: (s: Season) => void;
@@ -31,6 +37,8 @@ interface SimulationState {
   setCameraMode: (m: CameraMode) => void;
   fov: number;
   setFov: (v: number) => void;
+  savedCameraView: SavedCameraView | null;
+  saveDefaultView: (view: SavedCameraView) => void;
   winterSeverity: number;
   setWinterSeverity: (v: number) => void;
   refugePolicy: RefugePolicy;
