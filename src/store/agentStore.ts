@@ -112,7 +112,6 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     }
   },
   resetScenario: (populations) => {
-    // Kill all current agents
     const newAgents: Agent[] = [];
     for (const [type, count] of Object.entries(populations)) {
       for (let i = 0; i < (count as number); i++) {
@@ -125,6 +124,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       populationHistory: [],
       tickCounter: 0,
       selectedAgentId: null,
+      narration: '',
     });
   },
   setNarration: (narration) => set({ narration }),
