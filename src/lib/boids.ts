@@ -586,8 +586,10 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
       }
     }
 
-    fx += (Math.random() - 0.5) * 1.5;
-    fz += (Math.random() - 0.5) * 1.5;
+    // Smooth Perlin wander replaces jittery random noise
+    const [wx, wz] = wanderForce(agent, 1.2);
+    fx += wx;
+    fz += wz;
 
     agent.vx += fx * delta;
     agent.vz += fz * delta;
