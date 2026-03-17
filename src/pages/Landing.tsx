@@ -156,7 +156,7 @@ export default function Landing() {
             "We didn't program the cascade. We programmed the wolves. The cascade happened on its own."
           </motion.p>
           <motion.p className="text-sm text-muted-foreground/70 mb-10" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
-            The first browser-native agent-based ecosystem with emergent trophic cascades.
+            A browser-native agent-based ecosystem with emergent trophic cascades.
           </motion.p>
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.6 }}>
             {ctaButton('Enter Simulation')}
