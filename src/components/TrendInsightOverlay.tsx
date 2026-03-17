@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { X, MessageSquare } from 'lucide-react';
 import { useAgentStore } from '@/store/agentStore';
 import { useSimulationStore } from '@/store/simulationStore';
 import { supabase } from '@/integrations/supabase/client';
