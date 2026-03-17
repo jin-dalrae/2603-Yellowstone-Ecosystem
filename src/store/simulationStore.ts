@@ -57,6 +57,8 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   year: 1,
   cameraMode: 'orbit',
   setCameraMode: (cameraMode) => set({ cameraMode }),
+  fov: 60,
+  setFov: (fov) => set({ fov }),
   winterSeverity: 5,
   setWinterSeverity: (winterSeverity) => set({ winterSeverity }),
   refugePolicy: 'open',

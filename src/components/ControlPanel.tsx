@@ -315,6 +315,24 @@ export function ControlPanel() {
               </div>
             </div>
 
+            {/* FOV */}
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block">
+                Field of View: {fov}°
+              </label>
+              <Slider
+                value={[fov]}
+                onValueChange={([v]) => setFov(v)}
+                min={30}
+                max={110}
+                step={1}
+                className="w-full"
+              />
+              <div className="flex justify-between text-[9px] text-muted-foreground mt-1">
+                <span>Zoom</span><span>Wide</span>
+              </div>
+            </div>
+
             {/* Narration */}
             <div>
               <Button
