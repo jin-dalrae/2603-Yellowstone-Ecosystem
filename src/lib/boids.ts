@@ -47,9 +47,10 @@ export interface KillSite {
 
 export interface DamSite {
   x: number;
+  y: number;
   z: number;
-  age: number; // how long the dam has existed (seconds)
-  health: number; // 0-1, grows over time representing riparian recovery
+  age: number;
+  health: number;
 }
 
 let killSites: KillSite[] = [];
