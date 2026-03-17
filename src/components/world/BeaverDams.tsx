@@ -200,17 +200,18 @@ export function BeaverDams() {
         const d = dams[i];
         const damAngle = d.x * 0.5;
 
-        // ── Dam structure ──
-        dummy.position.set(d.x, 1.6, d.z);
+        // ── Dam structure — scale up so it's visible from afar ──
+        const baseY = d.y ?? 2.0;
+        dummy.position.set(d.x, baseY + 0.3, d.z);
         dummy.rotation.set(0, damAngle, 0);
-        const damScale = 0.7 + d.health * 0.5;
+        const damScale = (1.2 + d.health * 0.8) * 2.0;
         dummy.scale.setScalar(damScale);
         dummy.updateMatrix();
         damMeshRef.current!.setMatrixAt(i, dummy.matrix);
 
         // ── Recovery ring ──
-        const ringScale = 4 + d.health * 22;
-        dummy.position.set(d.x, 0.4, d.z);
+        const ringScale = 6 + d.health * 26;
+        dummy.position.set(d.x, baseY + 0.2, d.z);
         dummy.rotation.set(-Math.PI / 2, 0, 0);
         dummy.scale.set(ringScale, ringScale, 1);
         dummy.updateMatrix();
@@ -219,18 +220,18 @@ export function BeaverDams() {
         ringMeshRef.current!.setColorAt(i, ringColor);
 
         // ── Pond behind dam ──
-        const pondSize = d.health * 6 + 1.5;
-        const pondOffX = -Math.cos(damAngle) * (3 + d.health * 2);
-        const pondOffZ = -Math.sin(damAngle) * (3 + d.health * 2);
-        dummy.position.set(d.x + pondOffX, 1.65, d.z + pondOffZ);
+        const pondSize = d.health * 8 + 2.5;
+        const pondOffX = -Math.cos(damAngle) * (4 + d.health * 3);
+        const pondOffZ = -Math.sin(damAngle) * (4 + d.health * 3);
+        dummy.position.set(d.x + pondOffX, baseY + 0.15, d.z + pondOffZ);
         dummy.rotation.set(-Math.PI / 2, 0, 0);
         dummy.scale.set(pondSize, pondSize, 1);
         dummy.updateMatrix();
         pondMeshRef.current!.setMatrixAt(i, dummy.matrix);
 
         // ── Muddy shore ring around pond ──
-        const shoreSize = pondSize * 1.35;
-        dummy.position.set(d.x + pondOffX, 1.55, d.z + pondOffZ);
+        const shoreSize = pondSize * 1.4;
+        dummy.position.set(d.x + pondOffX, baseY + 0.05, d.z + pondOffZ);
         dummy.rotation.set(-Math.PI / 2, 0, 0);
         dummy.scale.set(shoreSize, shoreSize, 1);
         dummy.updateMatrix();
