@@ -287,6 +287,39 @@ function riverZ(x: number): number {
   return Math.sin(x * 0.03) * 20;
 }
 
+/** Water avoidance — land animals steer away from river and lake */
+const LAKE_CENTER_X = 25;
+const LAKE_CENTER_Z = -15;
+const LAKE_AVOID_RADIUS = 18;
+const WATER_TYPES = new Set<AgentType>(['beaver', 'osprey']); // these like water
+
+function waterAvoidance(agent: Agent): [number, number] {
+  if (WATER_TYPES.has(agent.type)) return [0, 0];
+  let fx = 0, fz = 0;
+
+  // Avoid river
+  const rz = riverZ(agent.x);
+  const riverDist = agent.z - rz;
+  const absRiverDist = Math.abs(riverDist);
+  const riverMargin = 10;
+  if (absRiverDist < riverMargin) {
+    const push = (1 - absRiverDist / riverMargin) * 3.0;
+    fz += (riverDist > 0 ? 1 : -1) * push;
+  }
+
+  // Avoid lake
+  const ldx = agent.x - LAKE_CENTER_X;
+  const ldz = agent.z - LAKE_CENTER_Z;
+  const lakeDist = Math.sqrt(ldx * ldx + ldz * ldz);
+  if (lakeDist < LAKE_AVOID_RADIUS && lakeDist > 0) {
+    const push = (1 - lakeDist / LAKE_AVOID_RADIUS) * 4.0;
+    fx += (ldx / lakeDist) * push;
+    fz += (ldz / lakeDist) * push;
+  }
+
+  return [fx, fz];
+}
+
 function riverAttraction(agent: Agent): [number, number] {
   const targetZ = riverZ(agent.x);
   const dz = targetZ - agent.z;
@@ -434,6 +467,11 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
 
     let fx = sx + ax + cx + bx;
     let fz = sz + az + cz + bz;
+
+    // Water avoidance for land animals
+    const [wax, waz] = waterAvoidance(agent);
+    fx += wax;
+    fz += waz;
 
     const maxSpd = MAX_SPEED[agent.type];
 
