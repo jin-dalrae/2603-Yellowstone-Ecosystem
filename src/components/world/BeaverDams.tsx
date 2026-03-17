@@ -220,29 +220,29 @@ export function BeaverDams() {
         dummy.updateMatrix();
         damMeshRef.current!.setMatrixAt(i, dummy.matrix);
 
-        // ── Recovery ring ──
-        const ringScale = 6 + d.health * 26;
-        dummy.position.set(d.x, baseY + 0.2, d.z);
+        // ── Recovery ring — subtle, small indicator ──
+        const ringScale = 3 + d.health * 5;
+        dummy.position.set(d.x, baseY + 0.12, d.z);
         dummy.rotation.set(-Math.PI / 2, 0, 0);
         dummy.scale.set(ringScale, ringScale, 1);
         dummy.updateMatrix();
         ringMeshRef.current!.setMatrixAt(i, dummy.matrix);
-        ringColor.setHSL(0.33, 0.5 + d.health * 0.4, 0.2 + d.health * 0.3);
+        ringColor.setHSL(0.33, 0.3 + d.health * 0.3, 0.25 + d.health * 0.2);
         ringMeshRef.current!.setColorAt(i, ringColor);
 
-        // ── Pond behind dam ──
-        const pondSize = d.health * 8 + 2.5;
-        const pondOffX = -Math.cos(damAngle) * (4 + d.health * 3);
-        const pondOffZ = -Math.sin(damAngle) * (4 + d.health * 3);
-        dummy.position.set(d.x + pondOffX, baseY + 0.15, d.z + pondOffZ);
+        // ── Pond behind dam — smaller, more natural ──
+        const pondSize = d.health * 4 + 1.5;
+        const pondOffX = -Math.cos(damAngle) * (2.5 + d.health * 2);
+        const pondOffZ = -Math.sin(damAngle) * (2.5 + d.health * 2);
+        dummy.position.set(d.x + pondOffX, baseY + 0.1, d.z + pondOffZ);
         dummy.rotation.set(-Math.PI / 2, 0, 0);
         dummy.scale.set(pondSize, pondSize, 1);
         dummy.updateMatrix();
         pondMeshRef.current!.setMatrixAt(i, dummy.matrix);
 
-        // ── Muddy shore ring around pond ──
-        const shoreSize = pondSize * 1.4;
-        dummy.position.set(d.x + pondOffX, baseY + 0.05, d.z + pondOffZ);
+        // ── Muddy shore ring around pond — subtle ──
+        const shoreSize = pondSize * 1.2;
+        dummy.position.set(d.x + pondOffX, baseY + 0.03, d.z + pondOffZ);
         dummy.rotation.set(-Math.PI / 2, 0, 0);
         dummy.scale.set(shoreSize, shoreSize, 1);
         dummy.updateMatrix();
@@ -304,7 +304,7 @@ export function BeaverDams() {
       {/* Recovery rings */}
       <instancedMesh ref={ringMeshRef} args={[undefined, undefined, MAX_DAMS]}>
         <ringGeometry args={[0.85, 1, 32]} />
-        <meshBasicMaterial vertexColors transparent opacity={0.35} side={THREE.DoubleSide} />
+        <meshBasicMaterial vertexColors transparent opacity={0.15} side={THREE.DoubleSide} />
       </instancedMesh>
 
       {/* Muddy shore around ponds */}
