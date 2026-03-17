@@ -5,7 +5,7 @@ import { useAgentStore } from '@/store/agentStore';
 import {
   Snowflake, Sun, Leaf, Flower2, Eye, Orbit, Play, Pause,
   ChevronLeft, ChevronRight, RotateCcw, Flame, Shield,
-  Zap, BookOpen, Mic
+  BookOpen, Mic
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
