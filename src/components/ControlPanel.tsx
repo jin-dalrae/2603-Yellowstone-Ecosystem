@@ -51,7 +51,7 @@ interface SpeciesSection {
 
 const SPECIES_SECTIONS: SpeciesSection[] = [
   {
-    emoji: '🐺', label: 'Wolf',
+    emoji: '🐺', label: 'Wolf', type: 'wolf' as AgentType,
     sliders: [
       { label: 'Energy Drain /s', key: 'wolfEnergyDrain', min: 0.5, max: 8, step: 0.5 },
       { label: 'Chase Distance', key: 'wolfChaseDist', min: 10, max: 60, step: 5 },
