@@ -204,10 +204,10 @@ export function Vegetation() {
         if (t.isRiparian) {
           const health = getRiparianTreeHealth(t.x, t.z);
           if (health >= 0) {
-            if (health < 0.15) {
+            if (health < 0.4) {
               alive = false;
             } else {
-              scaleMult = 0.2 + health * 0.8;
+              scaleMult = Math.max(0.15, (health - 0.4) / 0.6);
             }
           }
         }
