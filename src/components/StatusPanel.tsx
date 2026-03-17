@@ -10,16 +10,28 @@ import {
 } from '@/components/ui/chart';
 import { Area, AreaChart, XAxis, YAxis } from 'recharts';
 
+const SPECIES_COLORS = {
+  wolves: 'hsl(0 75% 55%)',
+  elk: 'hsl(142 60% 45%)',
+  bears: 'hsl(30 70% 40%)',
+  beavers: 'hsl(180 50% 40%)',
+  ravens: 'hsl(270 50% 55%)',
+  bison: 'hsl(55 70% 45%)',
+  moose: 'hsl(320 50% 50%)',
+  coyotes: 'hsl(90 55% 45%)',
+  ospreys: 'hsl(210 70% 55%)',
+};
+
 const chartConfig: ChartConfig = {
-  wolves: { label: 'Wolves', color: 'hsl(0 70% 50%)' },
-  elk: { label: 'Elk', color: 'hsl(142 50% 45%)' },
-  bears: { label: 'Bears', color: 'hsl(30 60% 35%)' },
-  beavers: { label: 'Beavers', color: 'hsl(25 50% 40%)' },
-  ravens: { label: 'Ravens', color: 'hsl(260 30% 30%)' },
-  bison: { label: 'Bison', color: 'hsl(20 55% 30%)' },
-  moose: { label: 'Moose', color: 'hsl(35 45% 35%)' },
-  coyotes: { label: 'Coyotes', color: 'hsl(45 50% 50%)' },
-  ospreys: { label: 'Osprey', color: 'hsl(210 60% 50%)' },
+  wolves: { label: 'Wolves', color: SPECIES_COLORS.wolves },
+  elk: { label: 'Elk', color: SPECIES_COLORS.elk },
+  bears: { label: 'Bears', color: SPECIES_COLORS.bears },
+  beavers: { label: 'Beavers', color: SPECIES_COLORS.beavers },
+  ravens: { label: 'Ravens', color: SPECIES_COLORS.ravens },
+  bison: { label: 'Bison', color: SPECIES_COLORS.bison },
+  moose: { label: 'Moose', color: SPECIES_COLORS.moose },
+  coyotes: { label: 'Coyotes', color: SPECIES_COLORS.coyotes },
+  ospreys: { label: 'Osprey', color: SPECIES_COLORS.ospreys },
 };
 
 const EVENT_ICONS: Record<SimEvent['type'], React.ReactNode> = {
