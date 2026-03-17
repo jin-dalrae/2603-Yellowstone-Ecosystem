@@ -45,7 +45,7 @@ interface AgentState {
   setNarration: (text: string) => void;
   setNarrationLoading: (loading: boolean) => void;
   clearExtinction: () => void;
-  tickAgents: (delta: number, season?: Season) => void;
+  tickAgents: (delta: number, season?: Season, year?: number) => void;
 }
 
 function initAgents(): Agent[] {
