@@ -79,7 +79,7 @@ const SPECIES_SECTIONS: SpeciesSection[] = [
     ],
   },
   {
-    emoji: '🦫', label: 'Beaver',
+    emoji: '🦫', label: 'Beaver', type: 'beaver' as AgentType,
     sliders: [
       { label: 'Energy Drain /s', key: 'beaverEnergyDrain', min: 0.2, max: 3, step: 0.2 },
       { label: 'Repro Chance', key: 'beaverReproChance', min: 0.001, max: 0.01, step: 0.001 },
