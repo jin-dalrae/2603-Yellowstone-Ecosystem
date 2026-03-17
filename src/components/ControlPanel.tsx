@@ -10,6 +10,7 @@ import {
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import type { AgentType } from '@/lib/boids';
+import { suppressRespawn } from '@/lib/boids';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
