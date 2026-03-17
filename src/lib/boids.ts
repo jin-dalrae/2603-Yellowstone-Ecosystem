@@ -398,6 +398,7 @@ export function createAgent(type: AgentType, x?: number, z?: number): Agent {
     energy: 50 + Math.random() * 30,
     age: 0,
     alive: true,
+    killCooldown: 0,
   };
 }
 
