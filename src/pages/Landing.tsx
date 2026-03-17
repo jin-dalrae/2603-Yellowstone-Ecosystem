@@ -8,8 +8,6 @@ import {
 import heroImage from '@/assets/hero-yellowstone.jpg';
 import wolfIcon from '@/assets/wolf-icon.png';
 import simScreenshot from '@/assets/screenshot-simulation.png';
-import closeup1 from '@/assets/screenshot-closeup-1.png';
-import closeup2 from '@/assets/screenshot-closeup-2.png';
 import { CascadeSVG } from '@/components/landing/CascadeSVG';
 import { ArchitectureSVG } from '@/components/landing/ArchitectureSVG';
 import { PulseRingSVG } from '@/components/landing/PulseRingSVG';
@@ -235,15 +233,6 @@ export default function Landing() {
             </div>
           </motion.div>
 
-          {/* Close-up screenshots */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <motion.div className="rounded-xl overflow-hidden border border-border shadow-xl" {...fadeUp} transition={{ delay: 0.1 }}>
-              <img src={closeup1} alt="Close-up of wildlife agents" className="w-full" loading="lazy" />
-            </motion.div>
-            <motion.div className="rounded-xl overflow-hidden border border-border shadow-xl" {...fadeUp} transition={{ delay: 0.2 }}>
-              <img src={closeup2} alt="Terrain and vegetation detail" className="w-full" loading="lazy" />
-            </motion.div>
-          </div>
         </div>
       </section>
 
