@@ -29,6 +29,8 @@ interface SimulationState {
   year: number;
   cameraMode: CameraMode;
   setCameraMode: (m: CameraMode) => void;
+  fov: number;
+  setFov: (v: number) => void;
   winterSeverity: number;
   setWinterSeverity: (v: number) => void;
   refugePolicy: RefugePolicy;
