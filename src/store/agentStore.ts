@@ -175,11 +175,12 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       ...(extinctSpecies ? { extinctSpecies } : {}),
     });
 
-    // Pause simulation on extinction
+    // Pause simulation on extinction — dynamic import to avoid circular dependency
     if (extinctSpecies) {
-      const { useSimulationStore } = require('@/store/simulationStore');
-      const sim = useSimulationStore.getState();
-      if (sim.isPlaying) sim.togglePlay();
+      import('@/store/simulationStore').then(({ useSimulationStore }) => {
+        const sim = useSimulationStore.getState();
+        if (sim.isPlaying) sim.togglePlay();
+      });
     }
   },
 }));
