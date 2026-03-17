@@ -693,6 +693,10 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
   respawnIfExtinct('coyote', aliveCoyotes, 5);
   respawnIfExtinct('osprey', aliveOspreys, 3);
 
+  // Update riparian state — elk grazing pressure vs tree recovery
+  const elkPositions = agents.filter(a => a.type === 'elk' && a.alive).map(a => ({ x: a.x, z: a.z }));
+  updateRiparianState(elkPositions, delta);
+
   const result = agents.filter(a => a.alive).concat(newBorns);
   return { agents: result, events };
 }
