@@ -50,7 +50,7 @@ function createRiverGeometry(): THREE.BufferGeometry {
     const lx = x + nx * MAX_HALF_WIDTH;
     const lz = centerZ + nz * MAX_HALF_WIDTH;
     const lTerrainH = getHeight(lx, lz);
-    const lh = Math.max(0.8, lTerrainH - 0.5);
+    const lh = lTerrainH + 0.3;
     positions.push(lx, lh, lz);
     normals.push(nx, 0, nz);
     uvs.push(0, t * 8);
