@@ -94,7 +94,7 @@ const SPECIES_SECTIONS: SpeciesSection[] = [
     ],
   },
   {
-    emoji: '🦬', label: 'Bison',
+    emoji: '🦬', label: 'Bison', type: 'bison' as AgentType,
     sliders: [
       { label: 'Energy Drain /s', key: 'bisonEnergyDrain', min: 0.2, max: 3, step: 0.2 },
       { label: 'Graze Rate /s', key: 'bisonGrazeRate', min: 1, max: 8, step: 0.5 },
