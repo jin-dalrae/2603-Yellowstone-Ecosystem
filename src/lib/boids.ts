@@ -3,7 +3,16 @@
 import { useEcoConfigStore } from '@/store/ecoConfigStore';
 import type { Season } from '@/store/simulationStore';
 import { updateRiparianState, getRiparianTreeHealth, getAverageRiparianHealth } from '@/lib/riparianState';
+import { noise2D } from '@/lib/noise';
 
+/** Smooth Perlin-based wander force — unique per agent, varies smoothly over time */
+function wanderForce(agent: Agent, strength: number = 1.5): [number, number] {
+  const id = agent.id * 0.137; // unique offset per agent
+  const t = agent.age * 0.3;   // slow time evolution
+  const wx = noise2D(id, t) * strength;
+  const wz = noise2D(id + 100, t + 50) * strength;
+  return [wx, wz];
+}
 export type AgentType = 'wolf' | 'elk' | 'bear' | 'beaver' | 'raven' | 'bison' | 'moose' | 'coyote' | 'osprey';
 
 export interface Agent {
