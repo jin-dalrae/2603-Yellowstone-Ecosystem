@@ -3,7 +3,16 @@
 import { useEcoConfigStore } from '@/store/ecoConfigStore';
 import type { Season } from '@/store/simulationStore';
 import { updateRiparianState, getRiparianTreeHealth, getAverageRiparianHealth } from '@/lib/riparianState';
+import { noise2D } from '@/lib/noise';
 
+/** Smooth Perlin-based wander force — unique per agent, varies smoothly over time */
+function wanderForce(agent: Agent, strength: number = 1.5): [number, number] {
+  const id = agent.id * 0.137; // unique offset per agent
+  const t = agent.age * 0.3;   // slow time evolution
+  const wx = noise2D(id, t) * strength;
+  const wz = noise2D(id + 100, t + 50) * strength;
+  return [wx, wz];
+}
 export type AgentType = 'wolf' | 'elk' | 'bear' | 'beaver' | 'raven' | 'bison' | 'moose' | 'coyote' | 'osprey';
 
 export interface Agent {
@@ -166,6 +175,86 @@ function chaseTarget(hunter: Agent, prey: Agent[], chaseDist: number): [number, 
   const dz = closest.z - hunter.z;
   const dist = Math.sqrt(dx * dx + dz * dz);
   return [(dx / dist) * HUNT_WEIGHT, (dz / dist) * HUNT_WEIGHT];
+}
+
+/** Pack flanking: wolves approach prey from offset angles to surround it */
+function packFlankChase(hunter: Agent, packMembers: Agent[], prey: Agent[], chaseDist: number): [number, number] {
+  // Find closest prey
+  let closest: Agent | null = null;
+  let minDist = chaseDist;
+  for (const p of prey) {
+    if (!p.alive) continue;
+    const dx = p.x - hunter.x;
+    const dz = p.z - hunter.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+    if (dist < minDist) {
+      minDist = dist;
+      closest = p;
+    }
+  }
+  if (!closest) return [0, 0];
+
+  // Determine this wolf's rank in the pack to assign a flanking angle
+  let rank = 0;
+  for (const m of packMembers) {
+    if (m.id < hunter.id) rank++;
+  }
+  const packSize = packMembers.length;
+
+  const dx = closest.x - hunter.x;
+  const dz = closest.z - hunter.z;
+  const dist = Math.sqrt(dx * dx + dz * dz);
+  const dirX = dx / dist;
+  const dirZ = dz / dist;
+
+  if (dist < 25 && packSize >= 2) {
+    // Flanking: offset approach angle based on rank
+    // Lead wolf (rank 0) drives straight, others fan out
+    const flankAngle = (rank / packSize) * Math.PI * 1.2 - Math.PI * 0.6;
+    const cos = Math.cos(flankAngle);
+    const sin = Math.sin(flankAngle);
+    const flankX = dirX * cos - dirZ * sin;
+    const flankZ = dirX * sin + dirZ * cos;
+
+    // Close in tighter when very near prey
+    const tighten = dist < 12 ? 1.5 : 1.0;
+    return [flankX * HUNT_WEIGHT * tighten, flankZ * HUNT_WEIGHT * tighten];
+  }
+
+  // Far away: straight chase
+  return [dirX * HUNT_WEIGHT, dirZ * HUNT_WEIGHT];
+}
+
+/** Defensive herding: tighten formation around herd center when predators are near */
+function defensiveHerd(agent: Agent, herdMates: Agent[], predators: Agent[], threatDist: number): [number, number] {
+  // Check if any predator is nearby
+  let threatened = false;
+  for (const p of predators) {
+    if (!p.alive) continue;
+    const dx = p.x - agent.x;
+    const dz = p.z - agent.z;
+    if (Math.sqrt(dx * dx + dz * dz) < threatDist) {
+      threatened = true;
+      break;
+    }
+  }
+  if (!threatened) return [0, 0];
+
+  // Find herd center
+  let cx = 0, cz = 0, count = 0;
+  for (const m of herdMates) {
+    cx += m.x; cz += m.z; count++;
+  }
+  if (count === 0) return [0, 0];
+  cx /= count; cz /= count;
+
+  // Pull strongly toward herd center
+  const dx = cx - agent.x;
+  const dz = cz - agent.z;
+  const dist = Math.sqrt(dx * dx + dz * dz);
+  if (dist < 2) return [0, 0];
+  const pull = 3.0;
+  return [(dx / dist) * pull, (dz / dist) * pull];
 }
 
 function fleeFrom(prey: Agent, predators: Agent[], fleeDist: number): [number, number] {
@@ -338,12 +427,11 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
 
     switch (agent.type) {
       case 'wolf': {
-        const [hx, hz] = chaseTarget(agent, elks, cfg.wolfChaseDist);
-        // Winter: increased aggression toward weakened prey
+        // Pack flanking hunt — wolves coordinate approach angles
+        const [hx, hz] = packFlankChase(agent, wolves, elks, cfg.wolfChaseDist);
         const aggressionMult = isWinter ? 1.5 : 1.0;
         fx += hx * aggressionMult;
         fz += hz * aggressionMult;
-        // Summer: pup-rearing reduces range (less movement)
         const drainMult = isSummer ? 0.8 : isWinter ? 1.2 : 1.0;
         agent.energy -= cfg.wolfEnergyDrain * drainMult * delta;
         break;
@@ -358,10 +446,11 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
         if (speed < 3) agent.energy += cfg.elkGrazeRate * grazeReduction * delta;
         const elkDrainMult = isWinter ? 1.5 : 1.0;
         agent.energy -= cfg.elkEnergyDrain * elkDrainMult * delta;
-        // Autumn: rut behavior — males move more erratically
+        // Autumn: rut behavior — erratic Perlin-driven movement
         if (isAutumn) {
-          fx += (Math.random() - 0.5) * 3.0;
-          fz += (Math.random() - 0.5) * 3.0;
+          const [rw1, rw2] = wanderForce(agent, 3.0);
+          fx += rw1;
+          fz += rw2;
         }
         break;
       }
@@ -369,8 +458,9 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
         const [hx, hz] = chaseTarget(agent, elks, cfg.bearChaseDist);
         fx += hx * 0.7;
         fz += hz * 0.7;
-        fx += (Math.random() - 0.5) * 2;
-        fz += (Math.random() - 0.5) * 2;
+        const [bwx, bwz] = wanderForce(agent, 2.0);
+        fx += bwx;
+        fz += bwz;
         agent.energy -= cfg.bearEnergyDrain * delta;
         const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
         if (speed < 2) agent.energy += 1.0 * delta;
@@ -403,20 +493,22 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
         break;
       }
       case 'bison': {
-        // Winter: gravitates to geothermal-warmed areas (center of map as proxy)
+        // Defensive herding: tighten formation when wolves nearby
         const [flx, flz] = fleeFrom(agent, wolves, cfg.bisonFleeDist);
         fx += flx * 0.6;
         fz += flz * 0.6;
+        const [dhx, dhz] = defensiveHerd(agent, bisons, wolves, 35);
+        fx += dhx;
+        fz += dhz;
         if (isWinter) {
-          // Attract toward geothermal zone (map center, roughly 0,0)
           const geoX = -agent.x * 0.03;
           const geoZ = -agent.z * 0.03;
           fx += geoX;
           fz += geoZ;
         } else {
-          // Summer: disperses across grasslands
-          fx += (Math.random() - 0.5) * 1.5;
-          fz += (Math.random() - 0.5) * 1.5;
+          const [bwx, bwz] = wanderForce(agent, 1.5);
+          fx += bwx;
+          fz += bwz;
         }
         const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
         const bisonGrazeMult = isWinter ? 0.5 : 1.0;
@@ -434,8 +526,9 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
         const riverMult = isSummer ? 0.8 : isSpring ? 0.6 : 0.3;
         fx += rx * riverMult;
         fz += rz * riverMult;
-        fx += (Math.random() - 0.5) * 1.5;
-        fz += (Math.random() - 0.5) * 1.5;
+        const [mwx, mwz] = wanderForce(agent, 1.5);
+        fx += mwx;
+        fz += mwz;
         const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
         // Winter: bark browsing — reduced graze rate
         // Moose benefit from healthy riparian vegetation (browse on willow/aspen)
@@ -472,8 +565,9 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
           // Dormant: minimal movement, low energy drain (roosting)
           agent.energy -= cfg.ospreyEnergyDrain * 0.3 * delta;
           // Slow drift
-          fx += (Math.random() - 0.5) * 0.5;
-          fz += (Math.random() - 0.5) * 0.5;
+          const [owx, owz] = wanderForce(agent, 0.5);
+          fx += owx;
+          fz += owz;
         } else {
           // Spring/summer: active aerial fishing
           const [ox, oz] = ospreyBehavior(agent);
@@ -492,8 +586,10 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
       }
     }
 
-    fx += (Math.random() - 0.5) * 1.5;
-    fz += (Math.random() - 0.5) * 1.5;
+    // Smooth Perlin wander replaces jittery random noise
+    const [wx, wz] = wanderForce(agent, 1.2);
+    fx += wx;
+    fz += wz;
 
     agent.vx += fx * delta;
     agent.vz += fz * delta;
