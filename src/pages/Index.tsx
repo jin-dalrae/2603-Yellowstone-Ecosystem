@@ -15,6 +15,7 @@ const Index = () => {
       <StatusOverlay />
       <AnimalDetailPanel />
       <TrendInsightOverlay />
+      <RiparianHealthIndicator />
     </div>
   );
 };

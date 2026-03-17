@@ -36,6 +36,7 @@ export function Scene() {
       <GrassPatches />
       <Animals />
       <AnimalLabels />
+      <BeaverDams />
     </Canvas>
   );
 }
