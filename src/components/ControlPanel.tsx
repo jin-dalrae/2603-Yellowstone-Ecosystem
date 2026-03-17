@@ -60,7 +60,7 @@ const SPECIES_SECTIONS: SpeciesSection[] = [
     ],
   },
   {
-    emoji: '🦌', label: 'Elk',
+    emoji: '🦌', label: 'Elk', type: 'elk' as AgentType,
     sliders: [
       { label: 'Energy Drain /s', key: 'elkEnergyDrain', min: 0.2, max: 4, step: 0.2 },
       { label: 'Graze Rate /s', key: 'elkGrazeRate', min: 1, max: 8, step: 0.5 },
