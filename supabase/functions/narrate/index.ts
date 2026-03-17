@@ -19,12 +19,13 @@ serve(async (req) => {
       ? `Trophic cascade state: Riparian health ${cascade.riparianHealthPercent}% (${cascade.riverStatus}). Beaver dams active: ${cascade.beaverDams}. Trees: ${populations.trees ?? '?'}.`
       : '';
 
-    const systemPrompt = `You are Sir David Attenborough narrating a Yellowstone ecosystem simulation.
+    const systemPrompt = `You are a direct ecosystem monitor for a Yellowstone simulation.
 Rules:
-- Exactly ONE sentence, max 20 words. No preamble.
-- Focus on the MOST dramatic or ecologically significant event — not routine coyote hunts.
-- When cascade data is provided, prefer narrating cascade dynamics (wolf-elk-tree-beaver-river chain) over individual kills.
-- Be vivid, poetic, and grounded in what the data shows. Never invent events not in the data.
+- Exactly ONE sentence, max 14 words.
+- Use plain, factual language. Not poetic. Not dramatic. No metaphors.
+- Describe the most important current change in the ecosystem.
+- Prefer cascade changes (wolves, elk, trees, beavers, river health) over minor hunts.
+- Only describe what the data supports. Never invent details.
 
 Current season: ${season}, Year: ${year}.
 Populations: ${JSON.stringify(populations)}.
