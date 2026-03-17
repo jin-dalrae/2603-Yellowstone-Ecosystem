@@ -526,8 +526,9 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
         const riverMult = isSummer ? 0.8 : isSpring ? 0.6 : 0.3;
         fx += rx * riverMult;
         fz += rz * riverMult;
-        fx += (Math.random() - 0.5) * 1.5;
-        fz += (Math.random() - 0.5) * 1.5;
+        const [mwx, mwz] = wanderForce(agent, 1.5);
+        fx += mwx;
+        fz += mwz;
         const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
         // Winter: bark browsing — reduced graze rate
         // Moose benefit from healthy riparian vegetation (browse on willow/aspen)
