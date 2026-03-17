@@ -70,7 +70,7 @@ const SPECIES_SECTIONS: SpeciesSection[] = [
     ],
   },
   {
-    emoji: '🐻', label: 'Bear',
+    emoji: '🐻', label: 'Bear', type: 'bear' as AgentType,
     sliders: [
       { label: 'Energy Drain /s', key: 'bearEnergyDrain', min: 0.5, max: 5, step: 0.5 },
       { label: 'Chase Distance', key: 'bearChaseDist', min: 10, max: 50, step: 5 },
