@@ -511,7 +511,7 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
       const dx = wolf.x - elk.x;
       const dz = wolf.z - elk.z;
       const dist = Math.sqrt(dx * dx + dz * dz);
-      if (dist < cfg.killDist) {
+      if (dist < cfg.killDist * (isWinter ? 1.4 : 1.0)) {
         elk.alive = false;
         wolf.energy = Math.min(100, wolf.energy + cfg.energyPerKill);
         killSites.push({ x: elk.x, z: elk.z, age: 0 });
