@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { AgentType } from '@/lib/boids';
 
 export interface EcoConfig {
   // Wolf
@@ -54,14 +55,23 @@ export interface EcoConfig {
   ospreyReproChance: number;
   ospreyMaxPop: number;
 
+  // Genetic fitness per species (0.5 - 1.5 multiplier)
+  geneticFitness: Record<AgentType, number>;
+
   // Shared
   energyPerKill: number;
   reproduceEnergy: number;
   killDist: number;
 
   set: (partial: Partial<EcoConfig>) => void;
+  setFitness: (species: AgentType, value: number) => void;
   reset: () => void;
 }
+
+const DEFAULT_FITNESS: Record<AgentType, number> = {
+  wolf: 1.0, elk: 1.0, bear: 1.0, beaver: 1.0, raven: 1.0,
+  bison: 1.0, moose: 1.0, coyote: 1.0, osprey: 1.0,
+};
 
 const DEFAULTS = {
   wolfEnergyDrain: 2.5,
@@ -108,13 +118,19 @@ const DEFAULTS = {
   ospreyReproChance: 0.002,
   ospreyMaxPop: 10,
 
+  geneticFitness: { ...DEFAULT_FITNESS },
+
   energyPerKill: 60,
   reproduceEnergy: 80,
   killDist: 2.5,
 };
 
-export const useEcoConfigStore = create<EcoConfig>((set) => ({
+export const useEcoConfigStore = create<EcoConfig>((set, get) => ({
   ...DEFAULTS,
   set: (partial) => set(partial),
-  reset: () => set(DEFAULTS),
+  setFitness: (species, value) => {
+    const current = get().geneticFitness;
+    set({ geneticFitness: { ...current, [species]: value } });
+  },
+  reset: () => set({ ...DEFAULTS, geneticFitness: { ...DEFAULT_FITNESS } }),
 }));
