@@ -308,17 +308,18 @@ function LakeBank({ position, radius }: { position: [number, number, number]; ra
       const cos = Math.cos(angle);
       const sin = Math.sin(angle);
 
-      // Inner edge (lake shore)
+      // Inner edge (lake shore) — follow terrain
       const ix = position[0] + cos * radius;
       const iz = position[2] + sin * radius;
-      positions.push(ix, 1.95, iz);
+      const innerH = getHeight(ix, iz);
+      positions.push(ix, Math.max(1.5, innerH - 0.2), iz);
       colors.push(0.35, 0.28, 0.18);
 
       // Outer edge
       const ox = position[0] + cos * (radius + BANK_WIDTH);
       const oz = position[2] + sin * (radius + BANK_WIDTH);
       const h = getHeight(ox, oz);
-      positions.push(ox, Math.max(1.8, h * 0.3 + 1.4), oz);
+      positions.push(ox, Math.max(1.5, h * 0.5 + 1.0), oz);
       colors.push(0.3, 0.32, 0.15);
 
       if (i < SEGS) {
