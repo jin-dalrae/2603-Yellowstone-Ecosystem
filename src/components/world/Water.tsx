@@ -25,30 +25,37 @@ function getHeight(x: number, z: number) {
  */
 function createRiverGeometry(): THREE.BufferGeometry {
   const SEGMENTS = 120;
-  const HALF_WIDTH = 5; // much wider than previous tube
   const positions: number[] = [];
   const uvs: number[] = [];
+  const normals: number[] = []; // store perpendicular direction for width scaling
   const indices: number[] = [];
 
   for (let i = 0; i <= SEGMENTS; i++) {
     const t = i / SEGMENTS;
     const x = -95 + t * 190;
     const centerZ = Math.sin(x * 0.03) * 20;
-    const h = 1.6; // water surface height
+    const h = 1.6;
 
-    // Perpendicular direction for width
     const dx = 1;
     const dz = Math.cos(x * 0.03) * 20 * 0.03;
     const len = Math.sqrt(dx * dx + dz * dz);
     const nx = -dz / len;
     const nz = dx / len;
 
+    // Store positions at MAX width (1.0 scale = full width)
+    const MAX_HALF_WIDTH = 9;
+
     // Left vertex
-    positions.push(x + nx * HALF_WIDTH, h, centerZ + nz * HALF_WIDTH);
-    uvs.push(0, t * 8); // repeat UV for tiling
+    positions.push(x + nx * MAX_HALF_WIDTH, h, centerZ + nz * MAX_HALF_WIDTH);
+    normals.push(nx, 0, nz); // perpendicular direction
+    uvs.push(0, t * 8);
+
+    // Center reference (stored as attribute for shader lerp)
+    // We store centerX, centerZ as custom attributes
 
     // Right vertex
-    positions.push(x - nx * HALF_WIDTH, h, centerZ - nz * HALF_WIDTH);
+    positions.push(x - nx * MAX_HALF_WIDTH, h, centerZ - nz * MAX_HALF_WIDTH);
+    normals.push(-nx, 0, -nz);
     uvs.push(1, t * 8);
 
     if (i < SEGMENTS) {
@@ -58,9 +65,26 @@ function createRiverGeometry(): THREE.BufferGeometry {
     }
   }
 
+  // Store center positions for each vertex pair so the shader can lerp width
+  const centers = new Float32Array(positions.length);
+  for (let i = 0; i <= SEGMENTS; i++) {
+    const t = i / SEGMENTS;
+    const x = -95 + t * 190;
+    const centerZ = Math.sin(x * 0.03) * 20;
+    // Left vertex center
+    centers[i * 6] = x;
+    centers[i * 6 + 1] = 1.6;
+    centers[i * 6 + 2] = centerZ;
+    // Right vertex center
+    centers[i * 6 + 3] = x;
+    centers[i * 6 + 4] = 1.6;
+    centers[i * 6 + 5] = centerZ;
+  }
+
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
   geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geo.setAttribute('aCenter', new THREE.Float32BufferAttribute(centers, 3));
   geo.setIndex(indices);
   geo.computeVertexNormals();
   return geo;
