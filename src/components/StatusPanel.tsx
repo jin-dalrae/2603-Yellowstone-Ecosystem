@@ -325,13 +325,6 @@ export function StatusPanel() {
           <PopulationChart data={populationHistory} />
         </div>
 
-        {/* Trend Insights */}
-        <div>
-          <label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block">
-            📊 Trend Insights
-          </label>
-          <TrendInsights events={events} />
-        </div>
 
         {/* Narration */}
         {(narration || narrationLoading) && (
