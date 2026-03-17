@@ -1,12 +1,13 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { fbm } from '@/lib/noise';
 import { useSimulationStore, SEASON_INDEX } from '@/store/simulationStore';
+import { useAgentStore } from '@/store/agentStore';
 import { getRiparianTreeHealth } from '@/lib/riparianState';
 
-const TREE_COUNT = 1200;
+const TREE_COUNT = 1800;
 const SIZE = 200;
 const MAX_HEIGHT = 28;
 
