@@ -11,15 +11,25 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
 
   try {
-    const { events, season, year, populations } = await req.json();
+    const { events, season, year, populations, cascade } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    const cascadeInfo = cascade
+      ? `Trophic cascade state: Riparian health ${cascade.riparianHealthPercent}% (${cascade.riverStatus}). Beaver dams active: ${cascade.beaverDams}. Trees: ${populations.trees ?? '?'}.`
+      : '';
+
     const systemPrompt = `You are Sir David Attenborough narrating a Yellowstone ecosystem simulation.
-Provide exactly ONE short sentence (max 20 words). Be vivid and poetic. No preamble.
+Rules:
+- Exactly ONE sentence, max 20 words. No preamble.
+- Focus on the MOST dramatic or ecologically significant event — not routine coyote hunts.
+- When cascade data is provided, prefer narrating cascade dynamics (wolf-elk-tree-beaver-river chain) over individual kills.
+- Be vivid, poetic, and grounded in what the data shows. Never invent events not in the data.
+
 Current season: ${season}, Year: ${year}.
 Populations: ${JSON.stringify(populations)}.
-Recent events: ${JSON.stringify(events.slice(0, 4))}`;
+Recent events: ${JSON.stringify(events)}.
+${cascadeInfo}`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -36,7 +46,7 @@ Recent events: ${JSON.stringify(events.slice(0, 4))}`;
             {
               role: "user",
               content:
-                "Narrate what is happening right now in the Yellowstone ecosystem based on the recent events and population data.",
+                "Narrate what is happening right now in the Yellowstone ecosystem based on the events, population data, and cascade state.",
             },
           ],
         }),
