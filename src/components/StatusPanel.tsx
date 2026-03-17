@@ -9,7 +9,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
-import { Area, AreaChart, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, XAxis, YAxis, Line, ComposedChart } from 'recharts';
 
 const SPECIES_COLORS = {
   wolves: 'hsl(0 75% 55%)',
