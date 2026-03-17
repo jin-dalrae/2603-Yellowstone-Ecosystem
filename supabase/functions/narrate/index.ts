@@ -19,17 +19,18 @@ serve(async (req) => {
       ? `Trophic cascade state: Riparian health ${cascade.riparianHealthPercent}% (${cascade.riverStatus}). Beaver dams active: ${cascade.beaverDams}. Trees: ${populations.trees ?? '?'}.`
       : '';
 
-    const systemPrompt = `You are a direct ecosystem monitor for a Yellowstone simulation.
+    const systemPrompt = `You narrate a Yellowstone ecosystem simulation. Give ecological insight.
 Rules:
-- Exactly ONE sentence, max 14 words.
-- Use plain, factual language. Not poetic. Not dramatic. No metaphors.
-- Describe the most important current change in the ecosystem.
-- Prefer cascade changes (wolves, elk, trees, beavers, river health) over minor hunts.
-- Only describe what the data supports. Never invent details.
+- ONE sentence, max 25 words. No preamble, no quotes.
+- Explain WHY something matters ecologically — cause and effect.
+- Examples of good insight: "Wolf kills are reducing elk pressure on willows, letting riverbanks stabilize." or "Beaver dams are raising the water table, expanding habitat for osprey."
+- Bad: "A wolf hunts an elk." (no insight) or "The river flows onward." (too vague)
+- Use the cascade data to connect populations to ecosystem health.
+- Reference specific numbers when they tell a story (e.g. "With only 3 wolves, elk overgrazing is unchecked").
 
-Current season: ${season}, Year: ${year}.
+Season: ${season}, Year: ${year}.
 Populations: ${JSON.stringify(populations)}.
-Recent events: ${JSON.stringify(events)}.
+Events: ${JSON.stringify(events)}.
 ${cascadeInfo}`;
 
     const response = await fetch(
