@@ -33,9 +33,9 @@ function createRiverGeometry(): THREE.BufferGeometry {
     const t = i / SEGMENTS;
     const x = -110 + t * 220;
     const centerZ = Math.sin(x * 0.03) * 20;
-    // Use terrain height at river center, slightly below ground
+    // Water sits slightly above terrain at river center
     const terrainH = getHeight(x, centerZ);
-    const h = Math.max(0.8, terrainH - 0.5);
+    const h = terrainH + 0.3;
 
     const dx = 1;
     const dz = Math.cos(x * 0.03) * 20 * 0.03;
