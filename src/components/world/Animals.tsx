@@ -107,15 +107,15 @@ function SpeciesMesh({ type, geo }: SpeciesMeshProps) {
 }
 
 export function Animals() {
-  const wolfGeo = useMemo(createWolfGeo, []);
-  const elkGeo = useMemo(createElkGeo, []);
-  const bearGeo = useMemo(createBearGeo, []);
-  const beaverGeo = useMemo(createBeaverGeo, []);
-  const ravenGeo = useMemo(createRavenGeo, []);
-  const bisonGeo = useMemo(createBisonGeo, []);
-  const mooseGeo = useMemo(createMooseGeo, []);
-  const coyoteGeo = useMemo(createCoyoteGeo, []);
-  const ospreyGeo = useMemo(createOspreyGeo, []);
+  const wolfGeo = useMemo(() => ANIMAL_GEO_CREATORS.wolf(), []);
+  const elkGeo = useMemo(() => ANIMAL_GEO_CREATORS.elk(), []);
+  const bearGeo = useMemo(() => ANIMAL_GEO_CREATORS.bear(), []);
+  const beaverGeo = useMemo(() => ANIMAL_GEO_CREATORS.beaver(), []);
+  const ravenGeo = useMemo(() => ANIMAL_GEO_CREATORS.raven(), []);
+  const bisonGeo = useMemo(() => ANIMAL_GEO_CREATORS.bison(), []);
+  const mooseGeo = useMemo(() => ANIMAL_GEO_CREATORS.moose(), []);
+  const coyoteGeo = useMemo(() => ANIMAL_GEO_CREATORS.coyote(), []);
+  const ospreyGeo = useMemo(() => ANIMAL_GEO_CREATORS.osprey(), []);
 
   // Tick agent simulation
   useFrame((_, delta) => {
