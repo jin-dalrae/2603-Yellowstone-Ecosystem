@@ -32,7 +32,7 @@ export interface Agent {
 
 export interface SimEvent {
   id: number;
-  type: 'kill' | 'birth' | 'extinction' | 'respawn' | 'starvation' | 'dam_built';
+  type: 'kill' | 'birth' | 'extinction' | 'respawn' | 'starvation' | 'dam_built' | 'strife';
   species: AgentType;
   timestamp: number;
   message: string;
