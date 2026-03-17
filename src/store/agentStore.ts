@@ -67,9 +67,9 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   tickCounter: 0,
   selectedAgentId: null,
   selectAgent: (id) => set({ selectedAgentId: id }),
-  tickAgents: (delta: number) => {
+  tickAgents: (delta: number, season?: Season) => {
     const { agents, events, populationHistory, tickCounter } = get();
-    const result = tickAgents(agents, delta);
+    const result = tickAgents(agents, delta, season);
     const wolfCount = result.agents.filter(a => a.type === 'wolf' && a.alive).length;
     const elkCount = result.agents.filter(a => a.type === 'elk' && a.alive).length;
     const bearCount = result.agents.filter(a => a.type === 'bear' && a.alive).length;
