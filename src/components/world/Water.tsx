@@ -33,9 +33,9 @@ function createRiverGeometry(): THREE.BufferGeometry {
     const t = i / SEGMENTS;
     const x = -110 + t * 220;
     const centerZ = Math.sin(x * 0.03) * 20;
-    const radial = Math.sqrt(x * x + centerZ * centerZ) / (SIZE * 0.5);
-    const bowl = Math.pow(Math.min(radial, 1), 2.2) * 10;
-    const h = 1.6 + bowl;
+    // Use terrain height at river center, slightly below ground
+    const terrainH = getHeight(x, centerZ);
+    const h = Math.max(0.8, terrainH - 0.5);
 
     const dx = 1;
     const dz = Math.cos(x * 0.03) * 20 * 0.03;
@@ -46,16 +46,21 @@ function createRiverGeometry(): THREE.BufferGeometry {
     // Store positions at MAX width (1.0 scale = full width)
     const MAX_HALF_WIDTH = 9;
 
-    // Left vertex
-    positions.push(x + nx * MAX_HALF_WIDTH, h, centerZ + nz * MAX_HALF_WIDTH);
-    normals.push(nx, 0, nz); // perpendicular direction
+    // Left vertex — sample terrain at bank edge for proper height
+    const lx = x + nx * MAX_HALF_WIDTH;
+    const lz = centerZ + nz * MAX_HALF_WIDTH;
+    const lTerrainH = getHeight(lx, lz);
+    const lh = Math.max(0.8, lTerrainH - 0.5);
+    positions.push(lx, lh, lz);
+    normals.push(nx, 0, nz);
     uvs.push(0, t * 8);
 
-    // Center reference (stored as attribute for shader lerp)
-    // We store centerX, centerZ as custom attributes
-
     // Right vertex
-    positions.push(x - nx * MAX_HALF_WIDTH, h, centerZ - nz * MAX_HALF_WIDTH);
+    const rx = x - nx * MAX_HALF_WIDTH;
+    const rz = centerZ - nz * MAX_HALF_WIDTH;
+    const rTerrainH = getHeight(rx, rz);
+    const rh = Math.max(0.8, rTerrainH - 0.5);
+    positions.push(rx, rh, rz);
     normals.push(-nx, 0, -nz);
     uvs.push(1, t * 8);
 
@@ -72,9 +77,8 @@ function createRiverGeometry(): THREE.BufferGeometry {
     const t = i / SEGMENTS;
     const x = -110 + t * 220;
     const centerZ = Math.sin(x * 0.03) * 20;
-    const radial = Math.sqrt(x * x + centerZ * centerZ) / (SIZE * 0.5);
-    const bowl = Math.pow(Math.min(radial, 1), 2.2) * 10;
-    const h = 1.6 + bowl;
+    const terrainH = getHeight(x, centerZ);
+    const h = Math.max(0.8, terrainH - 0.5);
     centers[i * 6] = x;
     centers[i * 6 + 1] = h;
     centers[i * 6 + 2] = centerZ;
