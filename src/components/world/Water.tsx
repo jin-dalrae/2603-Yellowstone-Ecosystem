@@ -209,7 +209,7 @@ export function Water() {
   return (
     <>
       {/* Lake */}
-      <mesh ref={lakeRef} geometry={lakeGeo} position={[25, 2.0, -15]} receiveShadow>
+      <mesh ref={lakeRef} geometry={lakeGeo} position={[25, Math.max(1.5, getHeight(25, -15) - 0.3), -15]} receiveShadow>
         <meshStandardMaterial
           ref={lakeMaterialRef}
           color={[0.08, 0.22, 0.42]}
