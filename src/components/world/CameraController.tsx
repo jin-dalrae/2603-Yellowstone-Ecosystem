@@ -38,7 +38,6 @@ export function CameraController() {
       (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
     }
   }, [fov, camera]);
-  const controlsRef = useRef<any>(null);
 
   useEffect(() => {
     if (cameraMode === 'god') {
