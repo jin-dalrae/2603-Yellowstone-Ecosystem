@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAgentStore, type PopSnapshot } from '@/store/agentStore';
 import type { SimEvent } from '@/lib/boids';
-import { ChevronLeft, ChevronRight, Skull, Baby, AlertTriangle, Utensils } from 'lucide-react';
+import type { AgentType } from '@/lib/boids';
+import { ChevronLeft, ChevronRight, Skull, Baby, AlertTriangle, Utensils, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import {
   ChartContainer,
   ChartTooltip,
@@ -42,6 +43,137 @@ const EVENT_ICONS: Record<SimEvent['type'], React.ReactNode> = {
   starvation: <Utensils className="w-3 h-3 text-muted-foreground shrink-0" />,
   dam_built: <Utensils className="w-3 h-3 text-primary shrink-0" />,
 };
+
+const EVENT_TYPE_LABELS: Record<SimEvent['type'], string> = {
+  kill: 'Kills',
+  birth: 'Births',
+  starvation: 'Starvation',
+  extinction: 'Extinctions',
+  respawn: 'Respawns',
+  dam_built: 'Dams Built',
+};
+
+const SPECIES_LABELS: Record<AgentType, string> = {
+  wolf: 'Wolf', elk: 'Elk', bear: 'Bear', beaver: 'Beaver', raven: 'Raven',
+  bison: 'Bison', moose: 'Moose', coyote: 'Coyote', osprey: 'Osprey',
+};
+
+interface TrendItem {
+  label: string;
+  current: number;
+  previous: number;
+  icon: React.ReactNode;
+}
+
+function computeTrends(events: SimEvent[]): TrendItem[] {
+  const now = Date.now();
+  const WINDOW = 60_000; // 1 minute
+
+  const currentWindow = events.filter(e => now - e.timestamp < WINDOW);
+  const prevWindow = events.filter(e => now - e.timestamp >= WINDOW && now - e.timestamp < WINDOW * 2);
+
+  // Aggregate by event type × species
+  const aggregate = (list: SimEvent[]) => {
+    const map = new Map<string, number>();
+    for (const e of list) {
+      const key = `${e.type}:${e.species}`;
+      map.set(key, (map.get(key) ?? 0) + 1);
+    }
+    return map;
+  };
+
+  const curAgg = aggregate(currentWindow);
+  const prevAgg = aggregate(prevWindow);
+
+  // Collect all keys from both windows
+  const allKeys = new Set([...curAgg.keys(), ...prevAgg.keys()]);
+  const trends: TrendItem[] = [];
+
+  for (const key of allKeys) {
+    const [eventType, species] = key.split(':') as [SimEvent['type'], AgentType];
+    const cur = curAgg.get(key) ?? 0;
+    const prev = prevAgg.get(key) ?? 0;
+    if (cur === 0 && prev === 0) continue;
+
+    trends.push({
+      label: `${SPECIES_LABELS[species]} ${EVENT_TYPE_LABELS[eventType]}`,
+      current: cur,
+      previous: prev,
+      icon: EVENT_ICONS[eventType],
+    });
+  }
+
+  // Sort by current count descending, then by change magnitude
+  trends.sort((a, b) => {
+    const aChange = Math.abs(a.current - a.previous);
+    const bChange = Math.abs(b.current - b.previous);
+    return (b.current + bChange) - (a.current + aChange);
+  });
+
+  return trends.slice(0, 8); // top 8 trends
+}
+
+function TrendBadge({ current, previous }: { current: number; previous: number }) {
+  if (previous === 0 && current === 0) return null;
+
+  const diff = current - previous;
+  const pct = previous > 0 ? Math.round((diff / previous) * 100) : current > 0 ? 100 : 0;
+
+  if (diff > 0) {
+    return (
+      <span className="flex items-center gap-0.5 text-[10px] font-semibold text-destructive">
+        <TrendingUp className="w-3 h-3" />
+        +{pct}%
+      </span>
+    );
+  }
+  if (diff < 0) {
+    return (
+      <span className="flex items-center gap-0.5 text-[10px] font-semibold text-primary">
+        <TrendingDown className="w-3 h-3" />
+        {pct}%
+      </span>
+    );
+  }
+  return (
+    <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+      <Minus className="w-3 h-3" />
+      steady
+    </span>
+  );
+}
+
+function TrendInsights({ events }: { events: SimEvent[] }) {
+  const trends = useMemo(() => computeTrends(events), [events]);
+
+  if (trends.length === 0) {
+    return (
+      <div className="text-xs text-muted-foreground text-center py-3">
+        Gathering trend data…
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Last 1 min</span>
+        <span className="text-[9px] text-muted-foreground uppercase tracking-wider">vs prev 1 min</span>
+      </div>
+      {trends.map((t) => (
+        <div
+          key={t.label}
+          className="flex items-center gap-2 text-xs py-1.5 px-2 rounded-md bg-secondary/30"
+        >
+          {t.icon}
+          <span className="text-foreground flex-1 truncate">{t.label}</span>
+          <span className="text-muted-foreground tabular-nums text-[11px] font-medium">{t.current}</span>
+          <TrendBadge current={t.current} previous={t.previous} />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function PopulationChart({ data }: { data: PopSnapshot[] }) {
   if (data.length < 2) {
@@ -191,6 +323,14 @@ export function StatusPanel() {
             Population
           </label>
           <PopulationChart data={populationHistory} />
+        </div>
+
+        {/* Trend Insights */}
+        <div>
+          <label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block">
+            📊 Trend Insights
+          </label>
+          <TrendInsights events={events} />
         </div>
 
         {/* Narration */}
