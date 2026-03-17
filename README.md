@@ -14,7 +14,7 @@
 
 Every ecology textbook tells the story of Yellowstone's wolf reintroduction. In 1995, 14 wolves were released into a park that had been without them for 70 years. What followed was one of the most dramatic trophic cascades ever documented — wolves changed the behavior of rivers.
 
-**Yellowstone Living World** is the first browser-native **world model** that lets you *experience* this cascade in real time, intervene in it, and observe what emerges.
+**Yellowstone Living World** is a browser-native **world model** that lets you *experience* this cascade in real time, intervene in it, and observe what emerges.
 
 ---
 
