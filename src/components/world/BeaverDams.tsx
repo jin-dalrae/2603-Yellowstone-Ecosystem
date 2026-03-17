@@ -308,7 +308,7 @@ export function BeaverDams() {
 
       {/* Cattail reeds around pond edges */}
       <instancedMesh ref={reedMeshRef} args={[reedGeo, undefined, MAX_DAMS * REEDS_PER_DAM]} castShadow>
-        <meshLambertMaterial vertexColors />
+        <meshLambertMaterial vertexColors side={THREE.DoubleSide} />
       </instancedMesh>
     </>
   );
