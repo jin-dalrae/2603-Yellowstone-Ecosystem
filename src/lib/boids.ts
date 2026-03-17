@@ -493,20 +493,22 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
         break;
       }
       case 'bison': {
-        // Winter: gravitates to geothermal-warmed areas (center of map as proxy)
+        // Defensive herding: tighten formation when wolves nearby
         const [flx, flz] = fleeFrom(agent, wolves, cfg.bisonFleeDist);
         fx += flx * 0.6;
         fz += flz * 0.6;
+        const [dhx, dhz] = defensiveHerd(agent, bisons, wolves, 35);
+        fx += dhx;
+        fz += dhz;
         if (isWinter) {
-          // Attract toward geothermal zone (map center, roughly 0,0)
           const geoX = -agent.x * 0.03;
           const geoZ = -agent.z * 0.03;
           fx += geoX;
           fz += geoZ;
         } else {
-          // Summer: disperses across grasslands
-          fx += (Math.random() - 0.5) * 1.5;
-          fz += (Math.random() - 0.5) * 1.5;
+          const [bwx, bwz] = wanderForce(agent, 1.5);
+          fx += bwx;
+          fz += bwz;
         }
         const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
         const bisonGrazeMult = isWinter ? 0.5 : 1.0;
