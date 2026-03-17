@@ -287,7 +287,7 @@ export function BeaverDams() {
     <>
       {/* Elaborate dam structures */}
       <instancedMesh ref={damMeshRef} args={[damGeo, undefined, MAX_DAMS]} castShadow receiveShadow>
-        <meshLambertMaterial vertexColors />
+        <meshLambertMaterial vertexColors side={THREE.DoubleSide} />
       </instancedMesh>
 
       {/* Recovery rings */}
