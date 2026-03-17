@@ -2,7 +2,8 @@ import { useEffect, useState, useRef } from 'react';
 import { useAgentStore } from '@/store/agentStore';
 import { useSimulationStore } from '@/store/simulationStore';
 import { supabase } from '@/integrations/supabase/client';
-import { Mic } from 'lucide-react';
+import { getAverageRiparianHealth, getRiparianZones } from '@/lib/riparianState';
+import { getDamSites } from '@/lib/boids';
 
 interface NarrationEntry {
   id: number;
