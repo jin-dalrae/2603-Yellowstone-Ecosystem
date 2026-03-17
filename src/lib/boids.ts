@@ -35,8 +35,18 @@ export interface KillSite {
   age: number;
 }
 
+export interface DamSite {
+  x: number;
+  z: number;
+  age: number; // how long the dam has existed (seconds)
+  health: number; // 0-1, grows over time representing riparian recovery
+}
+
 let killSites: KillSite[] = [];
 export function getKillSites() { return killSites; }
+
+let damSites: DamSite[] = [];
+export function getDamSites() { return damSites; }
 
 let eventIdCounter = 0;
 function makeEvent(type: SimEvent['type'], species: SimEvent['species'], message: string, x?: number, z?: number): SimEvent {
