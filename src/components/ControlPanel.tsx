@@ -257,9 +257,20 @@ export function ControlPanel() {
             {SPECIES_SECTIONS.map((section, idx) => (
               <div key={section.label}>
                 {idx > 0 && <div className="h-px bg-border mb-5" />}
-                <label className="text-xs text-muted-foreground uppercase tracking-wider mb-3 block">
-                  {section.emoji} {section.label} Parameters
-                </label>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-xs text-muted-foreground uppercase tracking-wider">
+                    {section.emoji} {section.label}
+                  </label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-6 px-2 text-[10px]"
+                    onClick={() => spawnAgents(section.type, 3)}
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Spawn 3
+                  </Button>
+                </div>
                 <div className="space-y-3">
                   {section.sliders.map((s) => (
                     <SliderRow
