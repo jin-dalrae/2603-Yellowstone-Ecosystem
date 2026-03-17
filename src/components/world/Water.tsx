@@ -300,7 +300,7 @@ function RiverBanks() {
 function LakeBank({ position, radius }: { position: [number, number, number]; radius: number }) {
   const geo = useMemo(() => {
     const SEGS = 48;
-    const BANK_WIDTH = 3;
+    const BANK_WIDTH = 2;
     const positions: number[] = [];
     const colors: number[] = [];
     const indices: number[] = [];
@@ -310,19 +310,19 @@ function LakeBank({ position, radius }: { position: [number, number, number]; ra
       const cos = Math.cos(angle);
       const sin = Math.sin(angle);
 
-      // Inner edge (lake shore) — follow terrain
+      // Inner edge (lake shore)
       const ix = position[0] + cos * radius;
       const iz = position[2] + sin * radius;
       const innerH = getHeight(ix, iz);
-      positions.push(ix, Math.max(1.5, innerH - 0.2), iz);
-      colors.push(0.35, 0.28, 0.18);
+      positions.push(ix, Math.max(0.8, innerH - 0.3), iz);
+      colors.push(0.28, 0.22, 0.14);
 
-      // Outer edge
+      // Outer edge — blend into terrain
       const ox = position[0] + cos * (radius + BANK_WIDTH);
       const oz = position[2] + sin * (radius + BANK_WIDTH);
-      const h = getHeight(ox, oz);
-      positions.push(ox, Math.max(1.5, h * 0.5 + 1.0), oz);
-      colors.push(0.3, 0.32, 0.15);
+      const outerH = getHeight(ox, oz);
+      positions.push(ox, Math.max(0.8, outerH - 0.1), oz);
+      colors.push(0.22, 0.28, 0.12);
 
       if (i < SEGS) {
         const base = i * 2;
