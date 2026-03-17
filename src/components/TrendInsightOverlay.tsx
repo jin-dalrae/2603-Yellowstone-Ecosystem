@@ -70,7 +70,7 @@ export function TrendInsightOverlay() {
         if (error) {
           console.warn('Narration error:', error);
         } else if (data?.narration) {
-          const cleanText = data.narration.replace(/\s+/g, ' ').trim().slice(0, 110);
+          const cleanText = data.narration.replace(/\s+/g, ' ').trim();
           if (cleanText) {
             setEntries(prev => [
               { id: narrationId++, text: cleanText, timestamp: Date.now() },
