@@ -21,6 +21,7 @@ const SPECIES_COLORS = {
   moose: 'hsl(320 50% 50%)',
   coyotes: 'hsl(90 55% 45%)',
   ospreys: 'hsl(210 70% 55%)',
+  trees: 'hsl(150 70% 30%)',
 };
 
 const chartConfig: ChartConfig = {
@@ -33,6 +34,7 @@ const chartConfig: ChartConfig = {
   moose: { label: 'Moose', color: SPECIES_COLORS.moose },
   coyotes: { label: 'Coyotes', color: SPECIES_COLORS.coyotes },
   ospreys: { label: 'Osprey', color: SPECIES_COLORS.ospreys },
+  trees: { label: 'Trees', color: SPECIES_COLORS.trees },
 };
 
 const EVENT_ICONS: Record<SimEvent['type'], React.ReactNode> = {
