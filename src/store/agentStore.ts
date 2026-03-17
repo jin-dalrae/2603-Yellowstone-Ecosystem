@@ -31,6 +31,7 @@ interface AgentState {
   tickCounter: number;
   selectedAgentId: number | null;
   selectAgent: (id: number | null) => void;
+  spawnAgents: (type: import('@/lib/boids').AgentType, count: number) => void;
   tickAgents: (delta: number, season?: Season) => void;
 }
 
