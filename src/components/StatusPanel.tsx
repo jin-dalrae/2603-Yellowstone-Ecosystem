@@ -9,7 +9,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
-import { Area, AreaChart, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, XAxis, YAxis, Line, ComposedChart } from 'recharts';
 
 const SPECIES_COLORS = {
   wolves: 'hsl(0 75% 55%)',
@@ -21,6 +21,7 @@ const SPECIES_COLORS = {
   moose: 'hsl(320 50% 50%)',
   coyotes: 'hsl(90 55% 45%)',
   ospreys: 'hsl(210 70% 55%)',
+  trees: 'hsl(150 70% 30%)',
 };
 
 const chartConfig: ChartConfig = {
@@ -33,6 +34,7 @@ const chartConfig: ChartConfig = {
   moose: { label: 'Moose', color: SPECIES_COLORS.moose },
   coyotes: { label: 'Coyotes', color: SPECIES_COLORS.coyotes },
   ospreys: { label: 'Osprey', color: SPECIES_COLORS.ospreys },
+  trees: { label: 'Trees', color: SPECIES_COLORS.trees },
 };
 
 const EVENT_ICONS: Record<SimEvent['type'], React.ReactNode> = {
@@ -184,24 +186,26 @@ function PopulationChart({ data }: { data: PopSnapshot[] }) {
     );
   }
 
-  const speciesKeys = Object.keys(SPECIES_COLORS) as (keyof typeof SPECIES_COLORS)[];
+  const animalKeys = ['wolves', 'elk', 'bears', 'beavers', 'ravens', 'bison', 'moose', 'coyotes', 'ospreys'] as const;
 
-  const gradients = speciesKeys.map(key => ({
+  const gradients = animalKeys.map(key => ({
     id: `${key}Grad`,
     color: SPECIES_COLORS[key],
   }));
 
-  const series = speciesKeys.map(key => ({
+  const series = animalKeys.map(key => ({
     key,
     stroke: SPECIES_COLORS[key],
     fill: `url(#${key}Grad)`,
     w: ['wolves', 'elk', 'bison'].includes(key) ? 2 : 1.5,
   }));
 
+  const allKeys = [...animalKeys, 'trees'] as const;
+
   return (
     <>
     <ChartContainer config={chartConfig} className="h-36 w-full">
-      <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+      <ComposedChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
         <defs>
           {gradients.map(g => (
             <linearGradient key={g.id} id={g.id} x1="0" y1="0" x2="0" y2="1">
@@ -211,15 +215,17 @@ function PopulationChart({ data }: { data: PopSnapshot[] }) {
           ))}
         </defs>
         <XAxis dataKey="tick" hide />
-        <YAxis tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} width={32} tickLine={false} axisLine={false} />
+        <YAxis yAxisId="left" tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} width={28} tickLine={false} axisLine={false} />
+        <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 9, fill: SPECIES_COLORS.trees }} width={32} tickLine={false} axisLine={false} />
         <ChartTooltip content={<ChartTooltipContent />} />
         {series.map(s => (
-          <Area key={s.key} type="monotone" dataKey={s.key} stroke={s.stroke} fill={s.fill} strokeWidth={s.w} dot={false} />
+          <Area key={s.key} yAxisId="left" type="monotone" dataKey={s.key} stroke={s.stroke} fill={s.fill} strokeWidth={s.w} dot={false} />
         ))}
-      </AreaChart>
+        <Line yAxisId="right" type="monotone" dataKey="trees" stroke={SPECIES_COLORS.trees} strokeWidth={2} dot={false} strokeDasharray="4 2" />
+      </ComposedChart>
     </ChartContainer>
     <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5 px-1">
-      {speciesKeys.map(key => (
+      {allKeys.map(key => (
         <div key={key} className="flex items-center gap-1">
           <span
             className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
