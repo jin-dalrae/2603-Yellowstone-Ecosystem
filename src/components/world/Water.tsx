@@ -78,7 +78,7 @@ function createRiverGeometry(): THREE.BufferGeometry {
     const x = -110 + t * 220;
     const centerZ = Math.sin(x * 0.03) * 20;
     const terrainH = getHeight(x, centerZ);
-    const h = Math.max(0.8, terrainH - 0.5);
+    const h = terrainH + 0.3;
     centers[i * 6] = x;
     centers[i * 6 + 1] = h;
     centers[i * 6 + 2] = centerZ;
