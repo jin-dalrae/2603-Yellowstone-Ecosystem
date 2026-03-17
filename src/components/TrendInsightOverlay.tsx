@@ -125,14 +125,14 @@ export function TrendInsightOverlay() {
       </button>
       <div className="pointer-events-none w-full flex flex-col items-center gap-1 overflow-hidden">
         {loading && visibleEntries.length === 0 && (
-          <p className="h-5 w-full overflow-hidden text-ellipsis whitespace-nowrap text-center text-sm text-white/60 italic leading-5 animate-pulse drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+          <p className="text-center text-sm text-white/60 animate-pulse drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             Observing…
           </p>
         )}
         {visibleEntries.map((entry, i) => (
           <p
             key={entry.id}
-            className="h-6 w-full overflow-hidden text-ellipsis whitespace-nowrap text-center text-base font-medium text-white leading-6 animate-in fade-in slide-in-from-top-2 duration-500 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]"
+            className="text-center text-sm font-medium text-white leading-relaxed animate-in fade-in slide-in-from-top-2 duration-500 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]"
             style={{ opacity: i === 0 ? 1 : 0.5 }}
           >
             {entry.text}
