@@ -257,17 +257,18 @@ function RiverBanks() {
         const nx = -dz / len;
         const nz = dx / len;
 
-        // Inner edge (river side)
+        // Inner edge (river side) — follow terrain
         const ix = x + nx * RIVER_WIDTH * sign;
         const iz = centerZ + nz * RIVER_WIDTH * sign;
-        positions.push(ix, 1.55, iz);
+        const innerH = getHeight(ix, iz);
+        positions.push(ix, Math.max(1.0, innerH - 0.3), iz);
         colors.push(0.35, 0.28, 0.18);
 
         // Outer edge
         const ox = x + nx * (RIVER_WIDTH + BANK_WIDTH) * sign;
         const oz = centerZ + nz * (RIVER_WIDTH + BANK_WIDTH) * sign;
         const h = getHeight(ox, oz);
-        positions.push(ox, Math.max(1.5, h * 0.3 + 1.2), oz);
+        positions.push(ox, Math.max(1.0, h * 0.5 + 0.8), oz);
         colors.push(0.3, 0.32, 0.15);
 
         if (i < SEGMENTS) {
