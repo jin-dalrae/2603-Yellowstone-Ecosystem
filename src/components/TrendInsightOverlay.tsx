@@ -16,9 +16,11 @@ export function TrendInsightOverlay() {
   const [entries, setEntries] = useState<NarrationEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  const busyRef = useRef(false);
 
   useEffect(() => {
     const fetchNarration = async () => {
+      if (busyRef.current) return;
       const { isPlaying } = useSimulationStore.getState();
       if (!isPlaying) return;
 
@@ -27,6 +29,7 @@ export function TrendInsightOverlay() {
 
       if (events.length === 0) return;
 
+      busyRef.current = true;
       setLoading(true);
       try {
         const { data, error } = await supabase.functions.invoke('narrate', {
@@ -53,15 +56,16 @@ export function TrendInsightOverlay() {
       } catch (err) {
         console.warn('Narration fetch failed:', err);
       } finally {
+        busyRef.current = false;
         setLoading(false);
       }
     };
 
-    // First narration after 8s, then every 25s
+    // First narration after 12s, then every 45s to avoid rate limits
     const timeout = setTimeout(() => {
       fetchNarration();
-      intervalRef.current = setInterval(fetchNarration, 25_000);
-    }, 8_000);
+      intervalRef.current = setInterval(fetchNarration, 45_000);
+    }, 12_000);
 
     return () => {
       clearTimeout(timeout);
