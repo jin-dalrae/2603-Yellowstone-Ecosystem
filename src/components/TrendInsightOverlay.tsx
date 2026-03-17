@@ -93,9 +93,5 @@ export function TrendInsightOverlay() {
       ))}
     </div>
   );
-}
-        </div>
-      ))}
-    </div>
-  );
-}
+
+
