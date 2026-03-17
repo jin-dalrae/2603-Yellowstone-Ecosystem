@@ -726,11 +726,13 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
     const lakeDist = Math.hypot(beaver.x - LAKE_X, beaver.z - LAKE_Z);
     const nearLake = lakeDist < LAKE_RADIUS + 12 && lakeDist > LAKE_RADIUS - 2;
     const nearRiver = Math.abs(beaver.z - riverZ(beaver.x)) < 8;
-    if ((nearLake || nearRiver) && Math.random() < 0.0003) {
+    if ((nearLake || nearRiver) && Math.random() < 0.0008) {
       // Don't stack dams too close
       const tooClose = damSites.some(d => Math.hypot(d.x - beaver.x, d.z - beaver.z) < 15);
       if (!tooClose) {
-        damSites.push({ x: beaver.x, z: beaver.z, age: 0, health: 0.1 });
+        // Estimate terrain height at dam site
+        const damY = 1.5 + fbm(beaver.x * 0.008, beaver.z * 0.008, 4) * 3;
+        damSites.push({ x: beaver.x, y: damY, z: beaver.z, age: 0, health: 0.1 });
         events.push(makeEvent('dam_built', 'beaver', 'Beaver built a dam — riparian recovery begins', beaver.x, beaver.z));
       }
     }
