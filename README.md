@@ -82,8 +82,7 @@ This is not a visualization. This is a *simulation*. Every data point is compute
 
 ### 🎮 Intervene
 - **Spawn / cull** any of 9 species with population sliders
-- **Adjust genetic fitness** per species (0.5x – 1.5x survival modifier)
-- **Trigger wildfires** that spread through cellular automata
+- **Trigger wildfires** that displace animals and stress the ecosystem
 - **Set winter severity** (1–10) affecting prey mortality and migration
 - **Toggle human refuge policy** (Open / Limited / Closed)
 
