@@ -147,22 +147,27 @@ export function Water() {
   useFrame((_, delta) => {
     const season = useSimulationStore.getState().season;
     const si = SEASON_INDEX[season];
+    const riparianHealth = getAverageRiparianHealth(); // 0-1
 
     // Animate river flow
     riverMat.uniforms.uTime.value += delta;
 
-    // Seasonal colors
+    // Seasonal + health-responsive colors
+    // Healthy river: clear deep blue. Degraded: murky brown-green
     const winterBlue = new THREE.Color(0.5, 0.6, 0.7);
-    const summerBlue = new THREE.Color(0.08, 0.22, 0.42);
+    const healthyBlue = new THREE.Color(0.06, 0.20, 0.45);
+    const degradedBrown = new THREE.Color(0.18, 0.16, 0.10);
     const t = Math.max(0, (si - 2));
 
-    const c = new THREE.Color().lerpColors(summerBlue, winterBlue, t);
+    const baseColor = new THREE.Color().lerpColors(degradedBrown, healthyBlue, riparianHealth);
+    const c = new THREE.Color().lerpColors(baseColor, winterBlue, t);
     riverMat.uniforms.uColor.value.copy(c);
-    riverMat.uniforms.uOpacity.value = 0.72 - t * 0.1;
+    // Healthier water is clearer (higher opacity), degraded is murkier
+    riverMat.uniforms.uOpacity.value = (0.55 + riparianHealth * 0.25) - t * 0.1;
 
     if (lakeMaterialRef.current) {
-      lakeMaterialRef.current.color.lerpColors(summerBlue, winterBlue, t);
-      lakeMaterialRef.current.opacity = 0.75 - t * 0.1;
+      lakeMaterialRef.current.color.lerpColors(baseColor, winterBlue, t);
+      lakeMaterialRef.current.opacity = (0.6 + riparianHealth * 0.2) - t * 0.1;
     }
   });
 
