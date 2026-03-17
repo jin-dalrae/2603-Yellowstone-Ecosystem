@@ -73,6 +73,8 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   mooseCount: 5,
   coyoteCount: 8,
   ospreyCount: 4,
+  treeCount: 0,
+  setTreeCount: (treeCount) => set({ treeCount }),
   events: [],
   populationHistory: [],
   tickCounter: 0,
