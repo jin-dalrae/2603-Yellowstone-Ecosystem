@@ -26,12 +26,12 @@ function createRiverGeometry(): THREE.BufferGeometry {
   const SEGMENTS = 120;
   const positions: number[] = [];
   const uvs: number[] = [];
-  const normals: number[] = []; // store perpendicular direction for width scaling
+  const normals: number[] = [];
   const indices: number[] = [];
 
   for (let i = 0; i <= SEGMENTS; i++) {
     const t = i / SEGMENTS;
-    const x = -95 + t * 190;
+    const x = -110 + t * 220;
     const centerZ = Math.sin(x * 0.03) * 20;
     const h = 1.6;
 
