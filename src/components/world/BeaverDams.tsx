@@ -230,19 +230,19 @@ export function BeaverDams() {
         ringColor.setHSL(0.33, 0.3 + d.health * 0.3, 0.25 + d.health * 0.2);
         ringMeshRef.current!.setColorAt(i, ringColor);
 
-        // ── Pond behind dam ──
-        const pondSize = d.health * 8 + 2.5;
-        const pondOffX = -Math.cos(damAngle) * (4 + d.health * 3);
-        const pondOffZ = -Math.sin(damAngle) * (4 + d.health * 3);
-        dummy.position.set(d.x + pondOffX, baseY + 0.15, d.z + pondOffZ);
+        // ── Pond behind dam — smaller, more natural ──
+        const pondSize = d.health * 4 + 1.5;
+        const pondOffX = -Math.cos(damAngle) * (2.5 + d.health * 2);
+        const pondOffZ = -Math.sin(damAngle) * (2.5 + d.health * 2);
+        dummy.position.set(d.x + pondOffX, baseY + 0.1, d.z + pondOffZ);
         dummy.rotation.set(-Math.PI / 2, 0, 0);
         dummy.scale.set(pondSize, pondSize, 1);
         dummy.updateMatrix();
         pondMeshRef.current!.setMatrixAt(i, dummy.matrix);
 
-        // ── Muddy shore ring around pond ──
-        const shoreSize = pondSize * 1.4;
-        dummy.position.set(d.x + pondOffX, baseY + 0.05, d.z + pondOffZ);
+        // ── Muddy shore ring around pond — subtle ──
+        const shoreSize = pondSize * 1.2;
+        dummy.position.set(d.x + pondOffX, baseY + 0.03, d.z + pondOffZ);
         dummy.rotation.set(-Math.PI / 2, 0, 0);
         dummy.scale.set(shoreSize, shoreSize, 1);
         dummy.updateMatrix();
