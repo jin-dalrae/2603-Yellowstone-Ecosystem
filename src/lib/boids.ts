@@ -501,13 +501,7 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
     agent.z = clampToWorld(agent.z + agent.vz * delta);
     agent.age += delta;
     
-    // Apply genetic fitness: low fitness = faster energy drain, reduced max energy
-    const fit = fitness[agent.type] ?? 1.0;
-    // Fitness inversely affects energy drain (applied as post-multiplier)
-    if (fit < 1.0) {
-      agent.energy -= (1.0 - fit) * 2.0 * delta; // extra drain for low fitness
-    }
-    agent.energy = Math.min(100 * fit, agent.energy);
+    agent.energy = Math.min(100, agent.energy);
 
     if (agent.energy <= 0) {
       agent.alive = false;
