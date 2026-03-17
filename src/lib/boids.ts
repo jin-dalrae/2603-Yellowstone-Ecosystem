@@ -787,7 +787,7 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
 
   // Respawn if extinct
   function respawnIfExtinct(type: AgentType, alive: Agent[], count: number) {
-    if (alive.length === 0) {
+    if (alive.length === 0 && !isRespawnSuppressed(type)) {
       for (let i = 0; i < count; i++) newBorns.push(createAgent(type));
       events.push(makeEvent('extinction', type, `${type.charAt(0).toUpperCase() + type.slice(1)}s went extinct — respawned`));
     }
