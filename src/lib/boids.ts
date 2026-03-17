@@ -438,7 +438,10 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
         fz += (Math.random() - 0.5) * 1.5;
         const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
         // Winter: bark browsing — reduced graze rate
-        const mooseGrazeMult = isWinter ? 0.5 : 1.0;
+        // Moose benefit from healthy riparian vegetation (browse on willow/aspen)
+        const mooseTreeHealth = getRiparianTreeHealth(agent.x, agent.z);
+        const mooseVegBonus = mooseTreeHealth >= 0 ? mooseTreeHealth : 0.3;
+        const mooseGrazeMult = (isWinter ? 0.5 : 1.0) * (0.5 + mooseVegBonus * 0.8);
         if (speed < 2) agent.energy += cfg.mooseGrazeRate * mooseGrazeMult * delta;
         agent.energy -= cfg.mooseEnergyDrain * (isWinter ? 1.3 : 1.0) * delta;
         break;
