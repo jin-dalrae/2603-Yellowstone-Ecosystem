@@ -177,6 +177,86 @@ function chaseTarget(hunter: Agent, prey: Agent[], chaseDist: number): [number, 
   return [(dx / dist) * HUNT_WEIGHT, (dz / dist) * HUNT_WEIGHT];
 }
 
+/** Pack flanking: wolves approach prey from offset angles to surround it */
+function packFlankChase(hunter: Agent, packMembers: Agent[], prey: Agent[], chaseDist: number): [number, number] {
+  // Find closest prey
+  let closest: Agent | null = null;
+  let minDist = chaseDist;
+  for (const p of prey) {
+    if (!p.alive) continue;
+    const dx = p.x - hunter.x;
+    const dz = p.z - hunter.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+    if (dist < minDist) {
+      minDist = dist;
+      closest = p;
+    }
+  }
+  if (!closest) return [0, 0];
+
+  // Determine this wolf's rank in the pack to assign a flanking angle
+  let rank = 0;
+  for (const m of packMembers) {
+    if (m.id < hunter.id) rank++;
+  }
+  const packSize = packMembers.length;
+
+  const dx = closest.x - hunter.x;
+  const dz = closest.z - hunter.z;
+  const dist = Math.sqrt(dx * dx + dz * dz);
+  const dirX = dx / dist;
+  const dirZ = dz / dist;
+
+  if (dist < 25 && packSize >= 2) {
+    // Flanking: offset approach angle based on rank
+    // Lead wolf (rank 0) drives straight, others fan out
+    const flankAngle = (rank / packSize) * Math.PI * 1.2 - Math.PI * 0.6;
+    const cos = Math.cos(flankAngle);
+    const sin = Math.sin(flankAngle);
+    const flankX = dirX * cos - dirZ * sin;
+    const flankZ = dirX * sin + dirZ * cos;
+
+    // Close in tighter when very near prey
+    const tighten = dist < 12 ? 1.5 : 1.0;
+    return [flankX * HUNT_WEIGHT * tighten, flankZ * HUNT_WEIGHT * tighten];
+  }
+
+  // Far away: straight chase
+  return [dirX * HUNT_WEIGHT, dirZ * HUNT_WEIGHT];
+}
+
+/** Defensive herding: tighten formation around herd center when predators are near */
+function defensiveHerd(agent: Agent, herdMates: Agent[], predators: Agent[], threatDist: number): [number, number] {
+  // Check if any predator is nearby
+  let threatened = false;
+  for (const p of predators) {
+    if (!p.alive) continue;
+    const dx = p.x - agent.x;
+    const dz = p.z - agent.z;
+    if (Math.sqrt(dx * dx + dz * dz) < threatDist) {
+      threatened = true;
+      break;
+    }
+  }
+  if (!threatened) return [0, 0];
+
+  // Find herd center
+  let cx = 0, cz = 0, count = 0;
+  for (const m of herdMates) {
+    cx += m.x; cz += m.z; count++;
+  }
+  if (count === 0) return [0, 0];
+  cx /= count; cz /= count;
+
+  // Pull strongly toward herd center
+  const dx = cx - agent.x;
+  const dz = cz - agent.z;
+  const dist = Math.sqrt(dx * dx + dz * dz);
+  if (dist < 2) return [0, 0];
+  const pull = 3.0;
+  return [(dx / dist) * pull, (dz / dist) * pull];
+}
+
 function fleeFrom(prey: Agent, predators: Agent[], fleeDist: number): [number, number] {
   let fx = 0, fz = 0;
   for (const w of predators) {
