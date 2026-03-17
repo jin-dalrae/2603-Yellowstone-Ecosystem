@@ -143,6 +143,7 @@ export function ControlPanel() {
   } = useSimulationStore();
 
   const eco = useEcoConfigStore();
+  const spawnAgents = useAgentStore((s) => s.spawnAgents);
 
   if (collapsed) {
     return (
