@@ -15,9 +15,10 @@ function getHeight(x: number, z: number) {
   const riverFactor = Math.max(0, 1 - riverDist / 15);
   h *= 1 - riverFactor * 0.6;
   const edgeDist = Math.max(Math.abs(x), Math.abs(z)) / (SIZE / 2);
-  const edgeFalloff = 1 - Math.pow(Math.max(0, edgeDist - 0.6) / 0.4, 2);
-  h *= edgeFalloff;
-  return Math.max(0.5, h);
+  const rimStart = 0.5;
+  const rimT = Math.max(0, (edgeDist - rimStart) / (1.0 - rimStart));
+  const rimHeight = rimT * rimT * 45;
+  return Math.max(0.5, h) + rimHeight;
 }
 
 /**
@@ -25,30 +26,37 @@ function getHeight(x: number, z: number) {
  */
 function createRiverGeometry(): THREE.BufferGeometry {
   const SEGMENTS = 120;
-  const HALF_WIDTH = 5; // much wider than previous tube
   const positions: number[] = [];
   const uvs: number[] = [];
+  const normals: number[] = []; // store perpendicular direction for width scaling
   const indices: number[] = [];
 
   for (let i = 0; i <= SEGMENTS; i++) {
     const t = i / SEGMENTS;
     const x = -95 + t * 190;
     const centerZ = Math.sin(x * 0.03) * 20;
-    const h = 1.6; // water surface height
+    const h = 1.6;
 
-    // Perpendicular direction for width
     const dx = 1;
     const dz = Math.cos(x * 0.03) * 20 * 0.03;
     const len = Math.sqrt(dx * dx + dz * dz);
     const nx = -dz / len;
     const nz = dx / len;
 
+    // Store positions at MAX width (1.0 scale = full width)
+    const MAX_HALF_WIDTH = 9;
+
     // Left vertex
-    positions.push(x + nx * HALF_WIDTH, h, centerZ + nz * HALF_WIDTH);
-    uvs.push(0, t * 8); // repeat UV for tiling
+    positions.push(x + nx * MAX_HALF_WIDTH, h, centerZ + nz * MAX_HALF_WIDTH);
+    normals.push(nx, 0, nz); // perpendicular direction
+    uvs.push(0, t * 8);
+
+    // Center reference (stored as attribute for shader lerp)
+    // We store centerX, centerZ as custom attributes
 
     // Right vertex
-    positions.push(x - nx * HALF_WIDTH, h, centerZ - nz * HALF_WIDTH);
+    positions.push(x - nx * MAX_HALF_WIDTH, h, centerZ - nz * MAX_HALF_WIDTH);
+    normals.push(-nx, 0, -nz);
     uvs.push(1, t * 8);
 
     if (i < SEGMENTS) {
@@ -58,9 +66,26 @@ function createRiverGeometry(): THREE.BufferGeometry {
     }
   }
 
+  // Store center positions for each vertex pair so the shader can lerp width
+  const centers = new Float32Array(positions.length);
+  for (let i = 0; i <= SEGMENTS; i++) {
+    const t = i / SEGMENTS;
+    const x = -95 + t * 190;
+    const centerZ = Math.sin(x * 0.03) * 20;
+    // Left vertex center
+    centers[i * 6] = x;
+    centers[i * 6 + 1] = 1.6;
+    centers[i * 6 + 2] = centerZ;
+    // Right vertex center
+    centers[i * 6 + 3] = x;
+    centers[i * 6 + 4] = 1.6;
+    centers[i * 6 + 5] = centerZ;
+  }
+
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
   geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geo.setAttribute('aCenter', new THREE.Float32BufferAttribute(centers, 3));
   geo.setIndex(indices);
   geo.computeVertexNormals();
   return geo;
@@ -75,21 +100,26 @@ function createWaterMaterial(): THREE.ShaderMaterial {
       uTime: { value: 0 },
       uColor: { value: new THREE.Color(0.08, 0.22, 0.42) },
       uOpacity: { value: 0.72 },
+      uWidthScale: { value: 0.55 }, // 0-1, maps to min/max river width
     },
     vertexShader: `
+      attribute vec3 aCenter;
       varying vec2 vUv;
+      uniform float uWidthScale;
       void main() {
+        // Lerp between center and full-width position based on scale
+        vec3 pos = mix(aCenter, position, uWidthScale);
         vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
       }
     `,
     fragmentShader: `
       uniform float uTime;
       uniform vec3 uColor;
       uniform float uOpacity;
+      uniform float uWidthScale;
       varying vec2 vUv;
 
-      // Simple noise
       float hash(vec2 p) {
         return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
       }
@@ -105,21 +135,17 @@ function createWaterMaterial(): THREE.ShaderMaterial {
       }
 
       void main() {
-        // Scrolling UV for flow
         vec2 flowUv = vUv;
         flowUv.y += uTime * 0.15;
 
-        // Layered noise for water texture
         float n1 = noise(flowUv * 6.0);
         float n2 = noise(flowUv * 12.0 + vec2(uTime * 0.08, 0.0));
         float n = n1 * 0.6 + n2 * 0.4;
 
-        // Ripple highlights
         float ripple = smoothstep(0.55, 0.7, n);
 
         vec3 col = uColor + ripple * 0.15;
 
-        // Foam at edges
         float edge = smoothstep(0.0, 0.15, vUv.x) * smoothstep(1.0, 0.85, vUv.x);
         float foam = (1.0 - edge) * 0.3;
         col += foam;
@@ -162,6 +188,10 @@ export function Water() {
     const baseColor = new THREE.Color().lerpColors(degradedBrown, healthyBlue, riparianHealth);
     const c = new THREE.Color().lerpColors(baseColor, winterBlue, t);
     riverMat.uniforms.uColor.value.copy(c);
+    // River width: min 0.35 (narrow/degraded) to 1.0 (full/healthy)
+    const targetWidth = 0.35 + riparianHealth * 0.65;
+    const curWidth = riverMat.uniforms.uWidthScale.value;
+    riverMat.uniforms.uWidthScale.value += (targetWidth - curWidth) * Math.min(1, delta * 0.5);
     // Healthier water is clearer (higher opacity), degraded is murkier
     riverMat.uniforms.uOpacity.value = (0.55 + riparianHealth * 0.25) - t * 0.1;
 
