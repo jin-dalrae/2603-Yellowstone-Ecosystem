@@ -25,23 +25,42 @@ export function TrendInsightOverlay() {
       const { isPlaying } = useSimulationStore.getState();
       if (!isPlaying) return;
 
-      const { events, wolfCount, elkCount, bearCount, beaverCount, ravenCount, bisonCount, mooseCount, coyoteCount, ospreyCount } = useAgentStore.getState();
+      const { events, wolfCount, elkCount, bearCount, beaverCount, ravenCount, bisonCount, mooseCount, coyoteCount, ospreyCount, treeCount } = useAgentStore.getState();
       const { season, year } = useSimulationStore.getState();
 
       if (events.length === 0) return;
+
+      // Deduplicate events by type — pick most interesting, not 5x "coyote caught small prey"
+      const seen = new Set<string>();
+      const diverseEvents = events.filter(e => {
+        const key = `${e.type}:${e.species}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).slice(0, 6).map(e => ({ type: e.type, species: e.species, message: e.message }));
+
+      // Cascade state
+      const riparianHealth = Math.round(getAverageRiparianHealth() * 100);
+      const damCount = getDamSites().length;
 
       busyRef.current = true;
       setLoading(true);
       try {
         const { data, error } = await supabase.functions.invoke('narrate', {
           body: {
-            events: events.slice(0, 6),
+            events: diverseEvents,
             season,
             year,
             populations: {
               wolves: wolfCount, elk: elkCount, bears: bearCount,
               beavers: beaverCount, ravens: ravenCount, bison: bisonCount,
               moose: mooseCount, coyotes: coyoteCount, ospreys: ospreyCount,
+              trees: treeCount,
+            },
+            cascade: {
+              riparianHealthPercent: riparianHealth,
+              beaverDams: damCount,
+              riverStatus: riparianHealth > 70 ? 'healthy' : riparianHealth > 40 ? 'recovering' : 'degraded',
             },
           },
         });
