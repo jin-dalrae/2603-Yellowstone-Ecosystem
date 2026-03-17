@@ -512,8 +512,7 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
       wolf: 120, elk: 150, bear: 180, beaver: 100, raven: 80,
       bison: 200, moose: 160, coyote: 100, osprey: 90,
     };
-    // Fitness affects lifespan
-    if (agent.age > maxAges[agent.type] * fit) { agent.alive = false; }
+    if (agent.age > maxAges[agent.type]) { agent.alive = false; }
   }
 
   // Wolf kills elk
