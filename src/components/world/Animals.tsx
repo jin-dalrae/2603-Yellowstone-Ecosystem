@@ -7,6 +7,27 @@ import { fbm } from '@/lib/noise';
 import type { AgentType } from '@/lib/boids';
 import { ANIMAL_GEO_CREATORS } from './animalGeometries';
 
+const MAX_COUNTS: Record<AgentType, number> = {
+  wolf: 30, elk: 70, bear: 15, beaver: 20, raven: 25,
+  bison: 50, moose: 20, coyote: 25, osprey: 15,
+};
+
+function getTerrainHeight(x: number, z: number): number {
+  const SIZE = 200;
+  const MAX_HEIGHT = 28;
+  let h = 0;
+  h += fbm(x * 0.008, z * 0.008, 6) * MAX_HEIGHT;
+  h += fbm(x * 0.02, z * 0.02, 4) * 5;
+  const riverDist = Math.abs(z - Math.sin(x * 0.03) * 20);
+  const riverFactor = Math.max(0, 1 - riverDist / 15);
+  h *= 1 - riverFactor * 0.6;
+  const edgeDist = Math.max(Math.abs(x), Math.abs(z)) / (SIZE / 2);
+  const edgeFalloff = 1 - Math.pow(Math.max(0, edgeDist - 0.6) / 0.4, 2);
+  h *= edgeFalloff;
+  h = Math.max(0.5, h);
+  return h;
+}
+
 const dummy = new THREE.Object3D();
 
 const COLORS: Record<AgentType, THREE.Color> = {
