@@ -36,6 +36,7 @@ interface AgentState {
   selectedAgentId: number | null;
   narration: string;
   narrationLoading: boolean;
+  extinctSpecies: AgentType | null;
   selectAgent: (id: number | null) => void;
   spawnAgents: (type: AgentType, count: number) => void;
   cullAgents: (type: AgentType, count: number) => void;
@@ -43,6 +44,7 @@ interface AgentState {
   resetScenario: (populations: Partial<Record<AgentType, number>>) => void;
   setNarration: (text: string) => void;
   setNarrationLoading: (loading: boolean) => void;
+  clearExtinction: () => void;
   tickAgents: (delta: number, season?: Season) => void;
 }
 
@@ -82,6 +84,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   selectedAgentId: null,
   narration: '',
   narrationLoading: false,
+  extinctSpecies: null,
   selectAgent: (id) => set({ selectedAgentId: id }),
   spawnAgents: (type, count) => {
     const { agents } = get();
@@ -125,8 +128,10 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       tickCounter: 0,
       selectedAgentId: null,
       narration: '',
+      extinctSpecies: null,
     });
   },
+  clearExtinction: () => set({ extinctSpecies: null }),
   setNarration: (narration) => set({ narration }),
   setNarrationLoading: (narrationLoading) => set({ narrationLoading }),
   tickAgents: (delta: number, season?: Season) => {
@@ -155,6 +160,11 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       }].slice(-MAX_HISTORY);
     }
 
+    // Check for wolf/elk extinction (<=1 = functionally extinct)
+    let extinctSpecies: AgentType | null = null;
+    if (wolfCount <= 1 && !get().extinctSpecies) extinctSpecies = 'wolf';
+    else if (elkCount <= 1 && !get().extinctSpecies) extinctSpecies = 'elk';
+
     set({
       agents: result.agents,
       wolfCount, elkCount, bearCount, beaverCount, ravenCount,
@@ -162,6 +172,15 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       events: newEvents,
       populationHistory: newHistory,
       tickCounter: newTick,
+      ...(extinctSpecies ? { extinctSpecies } : {}),
     });
+
+    // Pause simulation on extinction — dynamic import to avoid circular dependency
+    if (extinctSpecies) {
+      import('@/store/simulationStore').then(({ useSimulationStore }) => {
+        const sim = useSimulationStore.getState();
+        if (sim.isPlaying) sim.togglePlay();
+      });
+    }
   },
 }));

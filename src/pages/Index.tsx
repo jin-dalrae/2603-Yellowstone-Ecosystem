@@ -5,6 +5,7 @@ import { StatusPanel } from '@/components/StatusPanel';
 import { AnimalDetailPanel } from '@/components/AnimalDetailPanel';
 import { TrendInsightOverlay } from '@/components/TrendInsightOverlay';
 import { RiparianHealthIndicator } from '@/components/RiparianHealthIndicator';
+import { ExtinctionOverlay } from '@/components/ExtinctionOverlay';
 
 const Index = () => {
   return (
@@ -16,6 +17,7 @@ const Index = () => {
       <AnimalDetailPanel />
       <TrendInsightOverlay />
       <RiparianHealthIndicator />
+      <ExtinctionOverlay />
     </div>
   );
 };

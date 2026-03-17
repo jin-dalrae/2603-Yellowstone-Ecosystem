@@ -788,15 +788,21 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
   tryReproduce('coyote', aliveCoyotes, cfg.coyoteMaxPop, cfg.coyoteReproChance, 20);
   tryReproduce('osprey', aliveOspreys, cfg.ospreyMaxPop, cfg.ospreyReproChance, 15);
 
-  // Respawn if extinct
+  // Respawn if extinct (wolves and elk don't auto-respawn — triggers game-over)
   function respawnIfExtinct(type: AgentType, alive: Agent[], count: number) {
     if (alive.length === 0 && !isRespawnSuppressed(type)) {
       for (let i = 0; i < count; i++) newBorns.push(createAgent(type));
       events.push(makeEvent('extinction', type, `${type.charAt(0).toUpperCase() + type.slice(1)}s went extinct — respawned`));
     }
   }
-  respawnIfExtinct('wolf', aliveWolves, 5);
-  respawnIfExtinct('elk', aliveElks, 15);
+  // Check wolf/elk extinction (<=1 = functionally extinct)
+  if (aliveWolves.length <= 1) {
+    events.push(makeEvent('extinction', 'wolf', 'Wolves are functionally extinct'));
+  }
+  if (aliveElks.length <= 1) {
+    events.push(makeEvent('extinction', 'elk', 'Elk are functionally extinct'));
+  }
+  // Only auto-respawn non-critical species
   respawnIfExtinct('bear', aliveBears, 3);
   respawnIfExtinct('beaver', aliveBeavers, 4);
   respawnIfExtinct('raven', aliveRavens, 6);
