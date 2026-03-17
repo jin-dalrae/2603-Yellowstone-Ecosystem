@@ -99,21 +99,26 @@ function createWaterMaterial(): THREE.ShaderMaterial {
       uTime: { value: 0 },
       uColor: { value: new THREE.Color(0.08, 0.22, 0.42) },
       uOpacity: { value: 0.72 },
+      uWidthScale: { value: 0.55 }, // 0-1, maps to min/max river width
     },
     vertexShader: `
+      attribute vec3 aCenter;
       varying vec2 vUv;
+      uniform float uWidthScale;
       void main() {
+        // Lerp between center and full-width position based on scale
+        vec3 pos = mix(aCenter, position, uWidthScale);
         vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
       }
     `,
     fragmentShader: `
       uniform float uTime;
       uniform vec3 uColor;
       uniform float uOpacity;
+      uniform float uWidthScale;
       varying vec2 vUv;
 
-      // Simple noise
       float hash(vec2 p) {
         return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
       }
@@ -129,21 +134,17 @@ function createWaterMaterial(): THREE.ShaderMaterial {
       }
 
       void main() {
-        // Scrolling UV for flow
         vec2 flowUv = vUv;
         flowUv.y += uTime * 0.15;
 
-        // Layered noise for water texture
         float n1 = noise(flowUv * 6.0);
         float n2 = noise(flowUv * 12.0 + vec2(uTime * 0.08, 0.0));
         float n = n1 * 0.6 + n2 * 0.4;
 
-        // Ripple highlights
         float ripple = smoothstep(0.55, 0.7, n);
 
         vec3 col = uColor + ripple * 0.15;
 
-        // Foam at edges
         float edge = smoothstep(0.0, 0.15, vUv.x) * smoothstep(1.0, 0.85, vUv.x);
         float foam = (1.0 - edge) * 0.3;
         col += foam;
