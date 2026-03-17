@@ -5,7 +5,7 @@ import { useAgentStore } from '@/store/agentStore';
 import {
   Snowflake, Sun, Leaf, Flower2, Eye, Orbit, Play, Pause,
   ChevronLeft, ChevronRight, RotateCcw, Flame, Shield,
-  Zap, BookOpen, Mic
+  BookOpen, Mic
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
@@ -358,33 +358,6 @@ export function ControlPanel() {
               );
             })}
 
-            <div className="h-px bg-border" />
-
-            <label className="text-xs text-muted-foreground uppercase tracking-wider block">
-              <Zap className="w-3 h-3 inline mr-1" />
-              Genetic Fitness
-            </label>
-            <p className="text-[10px] text-muted-foreground -mt-3">
-              0.5 = disease/inbreeding, 1.5 = peak fitness
-            </p>
-            {SPECIES_CONTROLS.map((sp) => (
-              <div key={`fitness-${sp.type}`}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] text-muted-foreground">{sp.emoji} {sp.label}</span>
-                  <span className="text-[10px] text-foreground font-medium tabular-nums">
-                    {eco.geneticFitness[sp.type].toFixed(1)}x
-                  </span>
-                </div>
-                <Slider
-                  value={[eco.geneticFitness[sp.type]]}
-                  onValueChange={([v]) => eco.setFitness(sp.type, v)}
-                  min={0.5}
-                  max={1.5}
-                  step={0.1}
-                  className="w-full"
-                />
-              </div>
-            ))}
           </>
         )}
 
