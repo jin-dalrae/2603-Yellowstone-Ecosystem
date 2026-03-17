@@ -112,7 +112,9 @@ interface TreeData {
   rotY: number;
   scaleY: number;
   variant: number;
-  isRiparian: boolean; // near river — affected by trophic cascade
+  isRiparian: boolean;
+  isSapling: boolean; // dynamic regrowth slot
+  growthProgress: number; // 0-1 for saplings
 }
 
 export function Vegetation() {
@@ -123,12 +125,11 @@ export function Vegetation() {
   ];
   const dummyRef = useRef(new THREE.Object3D());
 
-  const { treeGroups, baseScales } = useMemo(() => {
+  const { treeGroups } = useMemo(() => {
     const groups: [TreeData[], TreeData[], TreeData[]] = [[], [], []];
-    const allBaseScales: Map<number, number> = new Map();
     const rng = mulberry(123);
-    let globalIdx = 0;
 
+    // Place base trees
     for (let i = 0; i < TREE_COUNT * 3; i++) {
       const x = (rng() - 0.5) * SIZE * 0.9;
       const z = (rng() - 0.5) * SIZE * 0.9;
@@ -136,19 +137,17 @@ export function Vegetation() {
       const riverDist = Math.abs(z - Math.sin(x * 0.03) * 20);
       const lakeDist = Math.sqrt((x - 25) ** 2 + (z + 15) ** 2);
 
-      // Allow trees on flat areas near water, just not submerged
       if (h < 1.8 || h > 22) continue;
-      if (riverDist < 4) continue; // still not in water
-      if (lakeDist < 15) continue; // not in lake
+      if (riverDist < 4) continue;
+      if (lakeDist < 15) continue;
 
       const isRiparian = riverDist < 20;
       const isLakeshore = lakeDist < 25;
 
-      // Higher density near water bodies and in flat riparian areas
       let density = h > 7 && h < 16 ? 0.7 : 0.35;
       if (isRiparian) density = Math.max(density, 0.7);
       if (isLakeshore) density = Math.max(density, 0.75);
-      if (h < 5 && (isRiparian || isLakeshore)) density = Math.max(density, 0.8); // flat areas near water get lots of trees
+      if (h < 5 && (isRiparian || isLakeshore)) density = Math.max(density, 0.8);
 
       if (rng() > density) continue;
 
@@ -159,34 +158,63 @@ export function Vegetation() {
       const variantRng = rng();
       const variantIdx = variantRng < 0.4 ? 0 : variantRng < 0.7 ? 1 : 2;
 
-      const tree: TreeData = {
+      groups[variantIdx].push({
         x, y: h, z, scale,
         rotY: rng() * Math.PI * 2,
         scaleY: 1 + rng() * 0.4,
         variant: variantIdx,
         isRiparian: isRiparian || isLakeshore,
-      };
-
-      groups[variantIdx].push(tree);
-      allBaseScales.set(globalIdx, scale);
-      globalIdx++;
+        isSapling: false,
+        growthProgress: 1,
+      });
     }
 
-    return { treeGroups: groups, baseScales: allBaseScales };
+    // Generate sapling slots in riparian zones (hidden initially)
+    const saplingRng = mulberry(999);
+    let saplingsPlaced = 0;
+    for (let i = 0; i < SAPLING_SLOTS * 5 && saplingsPlaced < SAPLING_SLOTS; i++) {
+      const x = (saplingRng() - 0.5) * SIZE * 0.85;
+      const z = (saplingRng() - 0.5) * SIZE * 0.85;
+      const h = getHeight(x, z);
+      const riverDist = Math.abs(z - Math.sin(x * 0.03) * 20);
+      const lakeDist = Math.sqrt((x - 25) ** 2 + (z + 15) ** 2);
+
+      if (h < 1.8 || h > 22) continue;
+      if (riverDist < 4 || lakeDist < 15) continue;
+
+      const isRiparian = riverDist < 20;
+      const isLakeshore = lakeDist < 25;
+      if (!isRiparian && !isLakeshore) continue; // saplings only in riparian
+
+      const scale = 0.3 + saplingRng() * 0.5; // smaller base
+      const variantRng2 = saplingRng();
+      const variantIdx = variantRng2 < 0.4 ? 0 : variantRng2 < 0.7 ? 1 : 2;
+
+      groups[variantIdx].push({
+        x, y: h, z, scale,
+        rotY: saplingRng() * Math.PI * 2,
+        scaleY: 1 + saplingRng() * 0.3,
+        variant: variantIdx,
+        isRiparian: true,
+        isSapling: true,
+        growthProgress: 0,
+      });
+      saplingsPlaced++;
+    }
+
+    return { treeGroups: groups };
   }, []);
 
   const totalTrees = treeGroups[0].length + treeGroups[1].length + treeGroups[2].length;
 
-  // Report tree count to store once
   useEffect(() => {
     useAgentStore.getState().setTreeCount(totalTrees);
   }, [totalTrees]);
 
   const initialized = useRef(false);
-
   const frameCount = useRef(0);
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     const d = dummyRef.current;
     const si = SEASON_INDEX[useSimulationStore.getState().season];
     let visibleCount = 0;
@@ -201,15 +229,30 @@ export function Vegetation() {
         let scaleMult = 1;
         let alive = true;
 
-        // Riparian response: tree size reflects health, hide dead trees
-        if (t.isRiparian) {
-          const health = getRiparianTreeHealth(t.x, t.z);
-          if (health >= 0) {
-            if (health < 0.4) {
-              alive = false;
-            } else {
-              scaleMult = Math.max(0.15, (health - 0.4) / 0.6);
-            }
+        const health = t.isRiparian ? getRiparianTreeHealth(t.x, t.z) : -1;
+
+        if (t.isSapling) {
+          // Saplings only appear when health > 0.65
+          if (health < 0.65) {
+            // Shrink back if health drops
+            t.growthProgress = Math.max(0, t.growthProgress - delta * 0.3);
+          } else {
+            // Grow towards full size based on health
+            const targetGrowth = Math.min(1, (health - 0.65) / 0.35);
+            // Slowly grow toward target
+            t.growthProgress = Math.min(targetGrowth, t.growthProgress + delta * 0.08);
+          }
+
+          if (t.growthProgress < 0.01) {
+            alive = false;
+          } else {
+            scaleMult = t.growthProgress * t.growthProgress; // ease-in curve
+          }
+        } else if (t.isRiparian && health >= 0) {
+          if (health < 0.4) {
+            alive = false;
+          } else {
+            scaleMult = Math.max(0.15, (health - 0.4) / 0.6);
           }
         }
 
@@ -222,7 +265,6 @@ export function Vegetation() {
             t.scale * scaleMult
           );
         } else {
-          // Hide by scaling to zero
           d.position.set(0, -100, 0);
           d.scale.set(0, 0, 0);
         }
@@ -230,18 +272,19 @@ export function Vegetation() {
         d.updateMatrix();
         mesh.setMatrixAt(i, d.matrix);
 
-        // Seasonal color modulation via instance color
         if (mesh.instanceColor) {
           let rMod = 0, gMod = 0, bMod = 0;
           if (si === 0) { gMod = 0.08; }
           else if (si === 2) { rMod = 0.3; gMod = 0.05; bMod = -0.02; }
           else if (si === 3) { rMod = 0.15; gMod = -0.05; bMod = 0.08; }
 
-          if (t.isRiparian) {
-            const health = getRiparianTreeHealth(t.x, t.z);
-            if (health > 0.5) {
-              gMod += (health - 0.5) * 0.15;
-            }
+          if (t.isRiparian && health > 0.5) {
+            gMod += (health - 0.5) * 0.15;
+          }
+          // Saplings are slightly lighter green
+          if (t.isSapling && t.growthProgress > 0) {
+            gMod += 0.1;
+            rMod += 0.02;
           }
 
           const c = new THREE.Color(0.05 + rMod, 0.25 + gMod, 0.03 + bMod);
@@ -253,7 +296,6 @@ export function Vegetation() {
       if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     }
 
-    // Update tree count in store every 30 frames
     frameCount.current++;
     if (frameCount.current % 30 === 0) {
       useAgentStore.getState().setTreeCount(visibleCount);
