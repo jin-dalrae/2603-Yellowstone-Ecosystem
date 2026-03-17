@@ -117,9 +117,9 @@ export function updateRiparianState(
     zone.grazingPressure = Math.min(1, zone.grazingPressure);
 
     // Grazing damages trees, recovery heals them
-    const damage = zone.grazingPressure * 0.08 * delta;
-    const recovery = (1 - zone.grazingPressure) * 0.005 * delta;
-    const damRecovery = zone.damBoost * 0.02 * delta; // dams accelerate recovery
+    const damage = zone.grazingPressure * 0.15 * delta;
+    const recovery = (1 - zone.grazingPressure) * 0.003 * delta;
+    const damRecovery = zone.damBoost * 0.015 * delta;
 
     zone.treeHealth = Math.max(0, Math.min(1, zone.treeHealth - damage + recovery + damRecovery));
   }

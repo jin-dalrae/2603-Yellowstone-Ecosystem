@@ -7,8 +7,8 @@ import { useSimulationStore, SEASON_INDEX } from '@/store/simulationStore';
 import { useAgentStore } from '@/store/agentStore';
 import { getRiparianTreeHealth } from '@/lib/riparianState';
 
-const TREE_COUNT = 800;
-const SAPLING_SLOTS = 300; // extra slots for dynamic regrowth
+const TREE_COUNT = 200;
+const SAPLING_SLOTS = 150; // extra slots for dynamic regrowth
 const SIZE = 200;
 const MAX_HEIGHT = 28;
 
