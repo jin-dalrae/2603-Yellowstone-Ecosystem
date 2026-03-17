@@ -389,15 +389,25 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
         break;
       }
       case 'bison': {
-        // Grazing in open plains, herd defense, flee from wolves
+        // Winter: gravitates to geothermal-warmed areas (center of map as proxy)
         const [flx, flz] = fleeFrom(agent, wolves, cfg.bisonFleeDist);
-        fx += flx * 0.6; // Less flighty than elk — herd defense
+        fx += flx * 0.6;
         fz += flz * 0.6;
-        fx += (Math.random() - 0.5) * 1.0;
-        fz += (Math.random() - 0.5) * 1.0;
+        if (isWinter) {
+          // Attract toward geothermal zone (map center, roughly 0,0)
+          const geoX = -agent.x * 0.03;
+          const geoZ = -agent.z * 0.03;
+          fx += geoX;
+          fz += geoZ;
+        } else {
+          // Summer: disperses across grasslands
+          fx += (Math.random() - 0.5) * 1.5;
+          fz += (Math.random() - 0.5) * 1.5;
+        }
         const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
-        if (speed < 2) agent.energy += cfg.bisonGrazeRate * delta;
-        agent.energy -= cfg.bisonEnergyDrain * delta;
+        const bisonGrazeMult = isWinter ? 0.5 : 1.0;
+        if (speed < 2) agent.energy += cfg.bisonGrazeRate * bisonGrazeMult * delta;
+        agent.energy -= cfg.bisonEnergyDrain * (isWinter ? 1.3 : 1.0) * delta;
         break;
       }
       case 'moose': {
