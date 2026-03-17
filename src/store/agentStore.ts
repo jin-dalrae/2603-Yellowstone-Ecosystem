@@ -84,6 +84,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   selectedAgentId: null,
   narration: '',
   narrationLoading: false,
+  extinctSpecies: null,
   selectAgent: (id) => set({ selectedAgentId: id }),
   spawnAgents: (type, count) => {
     const { agents } = get();
