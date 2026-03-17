@@ -71,7 +71,7 @@ This is not a visualization. This is a *simulation*. Every data point is compute
 ├─────────────────────────────────────────────────┤
 │              AI Narration Layer                   │
 │  LLM-powered David Attenborough commentary       │
-│  Auto-triggered every 25s from live event data   │
+│  Auto-triggered every 45s from live event data   │
 │  Edge function → Gemini Flash                    │
 └─────────────────────────────────────────────────┘
 ```
