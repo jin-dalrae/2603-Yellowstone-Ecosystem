@@ -468,6 +468,11 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
     let fx = sx + ax + cx + bx;
     let fz = sz + az + cz + bz;
 
+    // Water avoidance for land animals
+    const [wax, waz] = waterAvoidance(agent);
+    fx += wax;
+    fz += waz;
+
     const maxSpd = MAX_SPEED[agent.type];
 
     switch (agent.type) {

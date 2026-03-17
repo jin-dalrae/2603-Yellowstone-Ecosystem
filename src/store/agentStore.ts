@@ -175,12 +175,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       ...(extinctSpecies ? { extinctSpecies } : {}),
     });
 
-    // Pause simulation on extinction — dynamic import to avoid circular dependency
-    if (extinctSpecies) {
-      import('@/store/simulationStore').then(({ useSimulationStore }) => {
-        const sim = useSimulationStore.getState();
-        if (sim.isPlaying) sim.togglePlay();
-      });
-    }
+    // Show extinction overlay but don't auto-pause — let user decide
+    // (Previously this paused the sim, which confused users)
   },
 }));
