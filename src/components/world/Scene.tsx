@@ -5,6 +5,7 @@ import { Vegetation } from './Vegetation';
 import { GrassPatches } from './GrassPatches';
 import { Animals } from './Animals';
 import { AnimalLabels } from './AnimalLabels';
+import { BeaverDams } from './BeaverDams';
 import { Atmosphere } from './Atmosphere';
 import { CameraController } from './CameraController';
 import { useSimulationStore } from '@/store/simulationStore';
@@ -35,6 +36,7 @@ export function Scene() {
       <GrassPatches />
       <Animals />
       <AnimalLabels />
+      <BeaverDams />
     </Canvas>
   );
 }

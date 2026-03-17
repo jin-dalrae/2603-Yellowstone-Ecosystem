@@ -4,6 +4,7 @@ import { StatusOverlay } from '@/components/StatusOverlay';
 import { StatusPanel } from '@/components/StatusPanel';
 import { AnimalDetailPanel } from '@/components/AnimalDetailPanel';
 import { TrendInsightOverlay } from '@/components/TrendInsightOverlay';
+import { RiparianHealthIndicator } from '@/components/RiparianHealthIndicator';
 
 const Index = () => {
   return (
@@ -14,6 +15,7 @@ const Index = () => {
       <StatusOverlay />
       <AnimalDetailPanel />
       <TrendInsightOverlay />
+      <RiparianHealthIndicator />
     </div>
   );
 };

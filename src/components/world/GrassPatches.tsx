@@ -3,10 +3,12 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { fbm } from '@/lib/noise';
 import { useSimulationStore, SEASON_INDEX } from '@/store/simulationStore';
+import { getDamSites } from '@/lib/boids';
 
 const GRASS_COUNT = 3000;
 const SIZE = 200;
 const MAX_HEIGHT = 28;
+const DAM_EFFECT_RADIUS = 25;
 
 function getHeight(x: number, z: number) {
   let h = fbm(x * 0.008, z * 0.008, 6) * MAX_HEIGHT;
@@ -32,6 +34,7 @@ function mulberry(seed: number) {
 
 export function GrassPatches() {
   const meshRef = useRef<THREE.InstancedMesh>(null);
+  const dummyRef = useRef(new THREE.Object3D());
 
   const { grassData, baseColors } = useMemo(() => {
     const grassData: { x: number; y: number; z: number; scale: number; rotY: number }[] = [];
@@ -42,7 +45,6 @@ export function GrassPatches() {
       const x = (rng() - 0.5) * SIZE * 0.9;
       const z = (rng() - 0.5) * SIZE * 0.9;
       const h = getHeight(x, z);
-      // Grass grows in lower, flatter areas (not on high peaks or in water)
       if (h < 2 || h > 14) continue;
       const riverDist = Math.abs(z - Math.sin(x * 0.03) * 20);
       if (riverDist < 4) continue;
@@ -58,24 +60,20 @@ export function GrassPatches() {
   }, []);
 
   const geo = useMemo(() => {
-    // Flat narrow cone as grass blade cluster
     const g = new THREE.ConeGeometry(0.4, 1.2, 3);
     g.translate(0, 0.6, 0);
     return g;
-  }, []);
-
-  // Set matrices on mount
-  useMemo(() => {
-    // defer to useFrame for initial setup
   }, []);
 
   const initialized = useRef(false);
 
   useFrame(() => {
     if (!meshRef.current) return;
+    const d = dummyRef.current;
+    const damSites = getDamSites();
+    const si = SEASON_INDEX[useSimulationStore.getState().season];
 
     if (!initialized.current) {
-      const d = new THREE.Object3D();
       grassData.forEach((p, i) => {
         d.position.set(p.x, p.y, p.z);
         d.scale.set(p.scale, p.scale, p.scale);
@@ -94,35 +92,58 @@ export function GrassPatches() {
       initialized.current = true;
     }
 
-    // Seasonal color changes
-    const si = SEASON_INDEX[useSimulationStore.getState().season];
     const colors = meshRef.current.instanceColor;
     if (!colors) return;
+
+    const hasDams = damSites.length > 0;
 
     for (let i = 0; i < grassData.length; i++) {
       const bg = baseColors[i].g;
       let r = baseColors[i].r, g = bg, b = baseColors[i].b;
+      let scaleBoost = 1;
 
-      if (si === 0) {
-        // Spring: vibrant green
-        g = bg + 0.15;
-      } else if (si === 1) {
-        // Summer: lush
-        g = bg + 0.1;
-      } else if (si === 2) {
-        // Autumn: golden-brown
-        r += 0.2;
-        g = bg - 0.05;
-      } else {
-        // Winter: pale/dead
-        r += 0.15;
-        g = bg - 0.1;
-        b += 0.05;
+      // Dam proximity boost — riparian recovery
+      if (hasDams) {
+        let bestEffect = 0;
+        const gx = grassData[i].x;
+        const gz = grassData[i].z;
+        for (const dam of damSites) {
+          const dist = Math.hypot(gx - dam.x, gz - dam.z);
+          if (dist < DAM_EFFECT_RADIUS) {
+            const proximity = 1 - dist / DAM_EFFECT_RADIUS;
+            const effect = proximity * dam.health;
+            bestEffect = Math.max(bestEffect, effect);
+          }
+        }
+        if (bestEffect > 0) {
+          // Greener, lusher grass near dams
+          g += bestEffect * 0.25;
+          r -= bestEffect * 0.05;
+          b -= bestEffect * 0.02;
+          scaleBoost = 1 + bestEffect * 0.6; // taller grass
+        }
       }
 
+      // Seasonal color
+      if (si === 0) { g += 0.15; }
+      else if (si === 1) { g += 0.1; }
+      else if (si === 2) { r += 0.2; g -= 0.05; }
+      else { r += 0.15; g -= 0.1; b += 0.05; }
+
       colors.setXYZ(i, r, g, b);
+
+      // Update scale if dam effect changed it
+      if (scaleBoost > 1.01) {
+        const p = grassData[i];
+        d.position.set(p.x, p.y, p.z);
+        d.scale.set(p.scale * scaleBoost, p.scale * scaleBoost, p.scale * scaleBoost);
+        d.rotation.y = p.rotY;
+        d.updateMatrix();
+        meshRef.current!.setMatrixAt(i, d.matrix);
+      }
     }
     colors.needsUpdate = true;
+    if (hasDams) meshRef.current.instanceMatrix.needsUpdate = true;
   });
 
   return (
