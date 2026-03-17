@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useSimulationStore, SEASON_INDEX } from '@/store/simulationStore';
 import { fbm } from '@/lib/noise';
+import { getAverageRiparianHealth } from '@/lib/riparianState';
 
 const SIZE = 200;
 const MAX_HEIGHT = 28;
