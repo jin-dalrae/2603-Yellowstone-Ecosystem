@@ -604,12 +604,24 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
     }
   }
 
+  // Age and grow existing dam sites
+  damSites = damSites.filter(d => {
+    d.age += delta;
+    d.health = Math.min(1, d.health + delta * 0.008); // slowly recovers over ~120s
+    return d.age < 300; // dams last 5 minutes
+  });
+
   // Beaver dam events
   for (const beaver of beavers) {
     if (!beaver.alive) continue;
     const nearRiver = Math.abs(beaver.z - riverZ(beaver.x)) < 8;
     if (nearRiver && Math.random() < 0.0003) {
-      events.push(makeEvent('dam_built', 'beaver', 'Beaver built a dam on the river', beaver.x, beaver.z));
+      // Don't stack dams too close
+      const tooClose = damSites.some(d => Math.hypot(d.x - beaver.x, d.z - beaver.z) < 15);
+      if (!tooClose) {
+        damSites.push({ x: beaver.x, z: beaver.z, age: 0, health: 0.1 });
+        events.push(makeEvent('dam_built', 'beaver', 'Beaver built a dam — riparian recovery begins', beaver.x, beaver.z));
+      }
     }
   }
 
