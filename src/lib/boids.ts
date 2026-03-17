@@ -1,6 +1,7 @@
 // Boids flocking algorithm + predator-prey rules engine
 
 import { useEcoConfigStore } from '@/store/ecoConfigStore';
+import type { Season } from '@/store/simulationStore';
 
 export type AgentType = 'wolf' | 'elk' | 'bear' | 'beaver' | 'raven' | 'bison' | 'moose' | 'coyote' | 'osprey';
 
@@ -289,8 +290,12 @@ export function createAgent(type: AgentType, x?: number, z?: number): Agent {
   };
 }
 
-export function tickAgents(agents: Agent[], delta: number): TickResult {
+export function tickAgents(agents: Agent[], delta: number, season: Season = 'summer'): TickResult {
   const cfg = useEcoConfigStore.getState();
+  const isWinter = season === 'winter';
+  const isSpring = season === 'spring';
+  const isAutumn = season === 'autumn';
+  const isSummer = season === 'summer';
   const wolves = agents.filter(a => a.type === 'wolf' && a.alive);
   const elks = agents.filter(a => a.type === 'elk' && a.alive);
   const bears = agents.filter(a => a.type === 'bear' && a.alive);
@@ -323,9 +328,13 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
     switch (agent.type) {
       case 'wolf': {
         const [hx, hz] = chaseTarget(agent, elks, cfg.wolfChaseDist);
-        fx += hx;
-        fz += hz;
-        agent.energy -= cfg.wolfEnergyDrain * delta;
+        // Winter: increased aggression toward weakened prey
+        const aggressionMult = isWinter ? 1.5 : 1.0;
+        fx += hx * aggressionMult;
+        fz += hz * aggressionMult;
+        // Summer: pup-rearing reduces range (less movement)
+        const drainMult = isSummer ? 0.8 : isWinter ? 1.2 : 1.0;
+        agent.energy -= cfg.wolfEnergyDrain * drainMult * delta;
         break;
       }
       case 'elk': {
@@ -333,8 +342,16 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
         fx += flx;
         fz += flz;
         const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
-        if (speed < 3) agent.energy += cfg.elkGrazeRate * delta;
-        agent.energy -= cfg.elkEnergyDrain * delta;
+        // Winter: grazing is harder, energy drain increases
+        const grazeReduction = isWinter ? 0.4 : 1.0;
+        if (speed < 3) agent.energy += cfg.elkGrazeRate * grazeReduction * delta;
+        const elkDrainMult = isWinter ? 1.5 : 1.0;
+        agent.energy -= cfg.elkEnergyDrain * elkDrainMult * delta;
+        // Autumn: rut behavior — males move more erratically
+        if (isAutumn) {
+          fx += (Math.random() - 0.5) * 3.0;
+          fz += (Math.random() - 0.5) * 3.0;
+        }
         break;
       }
       case 'bear': {
@@ -372,15 +389,25 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
         break;
       }
       case 'bison': {
-        // Grazing in open plains, herd defense, flee from wolves
+        // Winter: gravitates to geothermal-warmed areas (center of map as proxy)
         const [flx, flz] = fleeFrom(agent, wolves, cfg.bisonFleeDist);
-        fx += flx * 0.6; // Less flighty than elk — herd defense
+        fx += flx * 0.6;
         fz += flz * 0.6;
-        fx += (Math.random() - 0.5) * 1.0;
-        fz += (Math.random() - 0.5) * 1.0;
+        if (isWinter) {
+          // Attract toward geothermal zone (map center, roughly 0,0)
+          const geoX = -agent.x * 0.03;
+          const geoZ = -agent.z * 0.03;
+          fx += geoX;
+          fz += geoZ;
+        } else {
+          // Summer: disperses across grasslands
+          fx += (Math.random() - 0.5) * 1.5;
+          fz += (Math.random() - 0.5) * 1.5;
+        }
         const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
-        if (speed < 2) agent.energy += cfg.bisonGrazeRate * delta;
-        agent.energy -= cfg.bisonEnergyDrain * delta;
+        const bisonGrazeMult = isWinter ? 0.5 : 1.0;
+        if (speed < 2) agent.energy += cfg.bisonGrazeRate * bisonGrazeMult * delta;
+        agent.energy -= cfg.bisonEnergyDrain * (isWinter ? 1.3 : 1.0) * delta;
         break;
       }
       case 'moose': {
@@ -388,15 +415,18 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
         const [flx, flz] = fleeFrom(agent, predators, cfg.mooseFleeDist);
         fx += flx;
         fz += flz;
-        // Attracted to river/beaver ponds for aquatic weed foraging
+        // Summer: relies on beaver pond sodium sources — stronger river attraction
         const [rx, rz] = riverAttraction(agent);
-        fx += rx * 0.4;
-        fz += rz * 0.4;
+        const riverMult = isSummer ? 0.8 : isSpring ? 0.6 : 0.3;
+        fx += rx * riverMult;
+        fz += rz * riverMult;
         fx += (Math.random() - 0.5) * 1.5;
         fz += (Math.random() - 0.5) * 1.5;
         const speed = Math.sqrt(agent.vx * agent.vx + agent.vz * agent.vz);
-        if (speed < 2) agent.energy += cfg.mooseGrazeRate * delta;
-        agent.energy -= cfg.mooseEnergyDrain * delta;
+        // Winter: bark browsing — reduced graze rate
+        const mooseGrazeMult = isWinter ? 0.5 : 1.0;
+        if (speed < 2) agent.energy += cfg.mooseGrazeRate * mooseGrazeMult * delta;
+        agent.energy -= cfg.mooseEnergyDrain * (isWinter ? 1.3 : 1.0) * delta;
         break;
       }
       case 'coyote': {
@@ -420,15 +450,25 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
         break;
       }
       case 'osprey': {
-        // Aerial patrol over rivers, dive-fishing
-        const [ox, oz] = ospreyBehavior(agent);
-        fx += ox;
-        fz += oz;
-        agent.energy -= cfg.ospreyEnergyDrain * delta;
-        // Fish near river
-        const riverDist = Math.abs(agent.z - riverZ(agent.x));
-        if (riverDist < 8) {
-          agent.energy += cfg.ospreyFishRate * delta;
+        // Active only spring/summer during spawning runs — per PRD
+        if (isWinter || isAutumn) {
+          // Dormant: minimal movement, low energy drain (roosting)
+          agent.energy -= cfg.ospreyEnergyDrain * 0.3 * delta;
+          // Slow drift
+          fx += (Math.random() - 0.5) * 0.5;
+          fz += (Math.random() - 0.5) * 0.5;
+        } else {
+          // Spring/summer: active aerial fishing
+          const [ox, oz] = ospreyBehavior(agent);
+          fx += ox;
+          fz += oz;
+          agent.energy -= cfg.ospreyEnergyDrain * delta;
+          const riverDist = Math.abs(agent.z - riverZ(agent.x));
+          if (riverDist < 8) {
+            // Spring spawning = best fishing
+            const fishMult = isSpring ? 1.5 : 1.0;
+            agent.energy += cfg.ospreyFishRate * fishMult * delta;
+          }
         }
         break;
       }
@@ -471,7 +511,7 @@ export function tickAgents(agents: Agent[], delta: number): TickResult {
       const dx = wolf.x - elk.x;
       const dz = wolf.z - elk.z;
       const dist = Math.sqrt(dx * dx + dz * dz);
-      if (dist < cfg.killDist) {
+      if (dist < cfg.killDist * (isWinter ? 1.4 : 1.0)) {
         elk.alive = false;
         wolf.energy = Math.min(100, wolf.energy + cfg.energyPerKill);
         killSites.push({ x: elk.x, z: elk.z, age: 0 });
