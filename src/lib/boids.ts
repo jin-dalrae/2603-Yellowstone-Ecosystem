@@ -565,8 +565,9 @@ export function tickAgents(agents: Agent[], delta: number, season: Season = 'sum
           // Dormant: minimal movement, low energy drain (roosting)
           agent.energy -= cfg.ospreyEnergyDrain * 0.3 * delta;
           // Slow drift
-          fx += (Math.random() - 0.5) * 0.5;
-          fz += (Math.random() - 0.5) * 0.5;
+          const [owx, owz] = wanderForce(agent, 0.5);
+          fx += owx;
+          fz += owz;
         } else {
           // Spring/summer: active aerial fishing
           const [ox, oz] = ospreyBehavior(agent);
