@@ -160,6 +160,11 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       }].slice(-MAX_HISTORY);
     }
 
+    // Check for wolf/elk extinction (<=1 = functionally extinct)
+    let extinctSpecies: AgentType | null = null;
+    if (wolfCount <= 1 && !get().extinctSpecies) extinctSpecies = 'wolf';
+    else if (elkCount <= 1 && !get().extinctSpecies) extinctSpecies = 'elk';
+
     set({
       agents: result.agents,
       wolfCount, elkCount, bearCount, beaverCount, ravenCount,
@@ -167,6 +172,14 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       events: newEvents,
       populationHistory: newHistory,
       tickCounter: newTick,
+      ...(extinctSpecies ? { extinctSpecies } : {}),
     });
+
+    // Pause simulation on extinction
+    if (extinctSpecies) {
+      const { useSimulationStore } = require('@/store/simulationStore');
+      const sim = useSimulationStore.getState();
+      if (sim.isPlaying) sim.togglePlay();
+    }
   },
 }));
